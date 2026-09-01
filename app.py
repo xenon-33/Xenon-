@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # ===== FILE PATHS - AUTO DETECT =====
-# अगर /tmp है (Render/Vercel) तो वहाँ use करें, नहीं तो local
 if os.path.exists("/tmp"):
     BASE_DIR = "/tmp"
 else:
@@ -98,7 +97,6 @@ DEFAULT_UI = {
     "login_subtitle": "Secure & Encrypted Access",
     "login_placeholder": "> Enter Master Password_",
     "login_button_text": "Access Core",
-    "login_forgot_text": "Forgot Access?",
     "login_credit_text": "🔐 Secured by @Xenon33cyber",
     "glitch_effect": True,
     "matrix_rain": True,
@@ -196,16 +194,6 @@ def log_error(error_type, message, api_key=None, query=None):
 def get_blacklist():
     return load_data(BLACKLIST_FILE, {"ips": [], "keys": []})
 
-def update_blacklist(entry_type, entry, action="add"):
-    blacklist = get_blacklist()
-    if action == "add":
-        if entry not in blacklist[entry_type]:
-            blacklist[entry_type].append(entry)
-    elif action == "remove":
-        if entry in blacklist[entry_type]:
-            blacklist[entry_type].remove(entry)
-    save_data(BLACKLIST_FILE, blacklist)
-
 def get_custom_apis():
     return load_data(CUSTOM_APIS_FILE, {})
 
@@ -233,7 +221,6 @@ def save_ui_settings(ui_data):
     save_data(UI_SETTINGS_FILE, ui_data)
 
 def hex_to_rgb(hex_color):
-    """Convert hex color #RRGGBB to 'R,G,B' string"""
     hex_color = hex_color.lstrip('#')
     if len(hex_color) == 6:
         r = int(hex_color[0:2], 16)
@@ -241,9 +228,6 @@ def hex_to_rgb(hex_color):
         b = int(hex_color[4:6], 16)
         return f"{r},{g},{b}"
     return "0,255,65"
-
-def get_rgb(settings, key):
-    return hex_to_rgb(settings.get(key, '#00ff41'))
 
 def admin_required(f):
     @wraps(f)
@@ -265,7 +249,7 @@ def rate_limit_check(ip):
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     return rate_limits[ip]["count"] <= settings.get("rate_limit_per_minute", 60)
 
-# ===== LOGIN HTML =====
+# ===== LOGIN HTML (Forgot Access Removed) =====
 LOGIN_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -343,7 +327,6 @@ LOGIN_HTML = """
         @keyframes glitch { 0%,95%,100% { transform: skew(0deg); opacity:1; } 96% { transform: skew(-2deg); opacity:0.8; } 97% { transform: skew(2deg); opacity:0.9; } 98% { transform: skew(-1deg); opacity:0.7; } }
         .login-subtitle { text-align: center; color: {{ settings.secondary_color }}; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 30px; font-weight: 300; }
         .form-group { margin-bottom: 18px; position: relative; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: {{ settings.secondary_color }}; }
         .form-control { width: 100%; padding: 12px 16px; background: rgba({{ rgb_primary }},0.03); border: 1px solid rgba({{ rgb_primary }},0.12); border-radius: 10px; color: {{ settings.primary_color }}; font-size: 14px; transition: all 0.3s ease; font-family: 'Courier New', monospace; letter-spacing: 1px; }
         .form-control:focus { outline: none; border-color: {{ settings.primary_color }}; box-shadow: 0 0 40px rgba({{ rgb_primary }},0.08); background: rgba({{ rgb_primary }},0.05); }
         .form-control::placeholder { color: {{ settings.secondary_color }}; opacity: 0.3; letter-spacing: 2px; }
@@ -351,17 +334,11 @@ LOGIN_HTML = """
         .btn:hover { background: {{ settings.primary_color }}; color: {{ settings.bg_color }}; box-shadow: 0 0 50px rgba({{ rgb_primary }},0.15); transform: translateY(-2px); }
         .btn::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); opacity: 0; transition: opacity 0.5s; }
         .btn:hover::after { opacity: 1; }
-        .login-footer { margin-top: 20px; text-align: center; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .login-footer a { color: {{ settings.secondary_color }}; text-decoration: none; font-size: 11px; letter-spacing: 1px; transition: color 0.3s; }
-        .login-footer a:hover { color: {{ settings.primary_color }}; }
+        .login-footer { margin-top: 20px; text-align: center; }
         .login-footer .credit { color: {{ settings.secondary_color }}; font-size: 10px; opacity: 0.5; letter-spacing: 1px; }
         .alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; border: 1px solid transparent; letter-spacing: 0.5px; }
         .alert-danger { background: rgba(255,0,0,0.08); color: #ff4444; border-color: rgba(255,0,0,0.15); }
         .alert-success { background: rgba({{ rgb_primary }},0.08); color: {{ settings.primary_color }}; border-color: rgba({{ rgb_primary }},0.15); }
-        .forgot-form .btn { background: rgba(255,165,0,0.05); border-color: #ffa500; color: #ffa500; }
-        .forgot-form .btn:hover { background: #ffa500; color: {{ settings.bg_color }}; }
-        .typing-cursor { display: inline-block; width: 2px; height: 16px; background: {{ settings.primary_color }}; animation: blink 0.8s step-end infinite; vertical-align: text-bottom; margin-left: 2px; }
-        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
         @media (max-width:480px) { .glass { padding:25px 20px; } .login-title { font-size:18px; } .logo-icon { font-size:40px; } }
     </style>
 </head>
@@ -375,23 +352,13 @@ LOGIN_HTML = """
             <div class="logo-icon"><i class="fas {{ ui.logo_icon }}"></i></div>
             <div class="login-title"><span class="glitch">{{ ui.login_title }}</span></div>
             <div class="login-subtitle">{{ ui.login_subtitle }}</div>
-            {% if forgot %}
-            <form method="POST" action="/reset_password">
-                <div class="form-group">
-                    <label>New Access Key</label>
-                    <input type="password" name="new_password" class="form-control" placeholder="> Enter New Secret_" required>
-                </div>
-                <div class="form-group">
-                    <label>Confirm Access Key</label>
-                    <input type="password" name="confirm_password" class="form-control" placeholder="> Confirm New Secret_" required>
-                </div>
-                <button type="submit" class="btn" style="border-color:#ffa500;color:#ffa500;"><i class="fas fa-key"></i> Reset Access</button>
-            </form>
-            <div class="login-footer">
-                <a href="/login"><i class="fas fa-arrow-left"></i> Return to Login</a>
-                <span class="credit">{{ ui.login_credit_text }}</span>
-            </div>
-            {% else %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             <form method="POST" action="/login">
                 <div class="form-group">
                     <input type="password" name="password" class="form-control" placeholder="{{ ui.login_placeholder }}" id="password-input" required autofocus>
@@ -399,10 +366,8 @@ LOGIN_HTML = """
                 <button type="submit" class="btn"><i class="fas fa-unlock-alt"></i> {{ ui.login_button_text }}</button>
             </form>
             <div class="login-footer">
-                <a href="/forgot"><i class="fas fa-question-circle"></i> {{ ui.login_forgot_text }}</a>
                 <span class="credit">{{ ui.login_credit_text }}</span>
             </div>
-            {% endif %}
         </div>
     </div>
     <script>
@@ -1013,8 +978,6 @@ CHANGE_PASSWORD_HTML = """
     .form-control:focus { outline:none; border-color:{{ settings.primary_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.06); }
     .btn { padding:10px 20px; border:1px solid {{ settings.primary_color }}; border-radius:8px; background:transparent; color:{{ settings.primary_color }}; cursor:pointer; font-family:'Courier New',monospace; font-weight:600; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:8px; text-decoration:none; width:100%; justify-content:center; }
     .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.1); }
-    .btn-danger { border-color:#ff4444; color:#ff4444; }
-    .btn-danger:hover { background:#ff4444; color:{{ settings.bg_color }}; }
     .btn-success { border-color:{{ settings.primary_color }}; color:{{ settings.primary_color }}; }
     .btn-success:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
     .mt-20 { margin-top:20px; }
@@ -1085,55 +1048,7 @@ def login():
             return redirect('/dashboard')
         else:
             flash('Invalid password! Please try again.', 'danger')
-    return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, forgot=False, version=VERSION)
-
-@app.route('/forgot', methods=['GET'])
-def forgot():
-    ui = get_ui_settings()
-    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
-    rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
-    return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, forgot=True, version=VERSION)
-
-@app.route('/reset_password', methods=['POST'])
-def reset_password():
-    ui = get_ui_settings()
-    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
-    rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
-    new_password = request.form.get('new_password')
-    confirm_password = request.form.get('confirm_password')
-    if not new_password or len(new_password) < 4:
-        flash('Password must be at least 4 characters long!', 'danger')
-        return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, forgot=True, version=VERSION)
-    if new_password != confirm_password:
-        flash('Passwords do not match!', 'danger')
-        return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, forgot=True, version=VERSION)
-    set_admin_password(new_password)
-    flash('Password reset successful! Please login with new password.', 'success')
-    return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, forgot=False, version=VERSION)
-
-@app.route('/change_password', methods=['GET', 'POST'])
-@admin_required
-def change_password():
-    ui = get_ui_settings()
-    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
-    rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
-    if request.method == 'POST':
-        current = request.form.get('current_password')
-        new = request.form.get('new_password')
-        confirm = request.form.get('confirm_password')
-        if current != get_admin_password():
-            flash('Current password is incorrect!', 'danger')
-            return redirect('/change_password')
-        if not new or len(new) < 4:
-            flash('New password must be at least 4 characters!', 'danger')
-            return redirect('/change_password')
-        if new != confirm:
-            flash('Passwords do not match!', 'danger')
-            return redirect('/change_password')
-        set_admin_password(new)
-        flash('Password changed successfully!', 'success')
-        return redirect('/dashboard')
-    return render_template_string(CHANGE_PASSWORD_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary)
+    return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, version=VERSION)
 
 @app.route('/dashboard')
 @admin_required
@@ -1165,6 +1080,30 @@ def logout():
     session.pop('admin', None)
     session.pop('login_time', None)
     return redirect('/login')
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@admin_required
+def change_password():
+    ui = get_ui_settings()
+    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
+    if request.method == 'POST':
+        current = request.form.get('current_password')
+        new = request.form.get('new_password')
+        confirm = request.form.get('confirm_password')
+        if current != get_admin_password():
+            flash('Current password is incorrect!', 'danger')
+            return redirect('/change_password')
+        if not new or len(new) < 4:
+            flash('New password must be at least 4 characters!', 'danger')
+            return redirect('/change_password')
+        if new != confirm:
+            flash('Passwords do not match!', 'danger')
+            return redirect('/change_password')
+        set_admin_password(new)
+        flash('Password changed successfully!', 'success')
+        return redirect('/dashboard')
+    return render_template_string(CHANGE_PASSWORD_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary)
 
 @app.route('/generate', methods=['POST'])
 @admin_required
@@ -1414,7 +1353,6 @@ def handler(request, context):
 
 # ===== MAIN =====
 if __name__ == "__main__":
-    # Localhost के लिए 5099, Render/Vercel के लिए PORT env
     port = int(os.environ.get("PORT", 5099))
     print("=" * 70)
     print(f"💀 {API_NAME} v{VERSION}")
