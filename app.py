@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+Xenon API Management System v3.0.0
+Owner: @Xenon33cyber
+Developer: @Xenon33cyber
+Deploy: Render / Vercel Ready
+"""
+
 import os
 import json
 import requests
@@ -15,15 +22,18 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# ===== CONSTANTS =====
-ADMIN_PASSWORD_FILE = "/tmp/admin_password.json"
-KEYS_FILE = "/tmp/api_keys.json"
-SETTINGS_FILE = "/tmp/api_settings.json"
-ANALYTICS_FILE = "/tmp/analytics.json"
-BLACKLIST_FILE = "/tmp/blacklist.json"
-RATE_LIMIT_FILE = "/tmp/rate_limits.json"
-CUSTOM_APIS_FILE = "/tmp/custom_apis.json"
-UI_SETTINGS_FILE = "/tmp/ui_settings.json"
+# ===== FILE PATHS - RENDER/VERCEL COMPATIBLE =====
+# Use /tmp for Render/Vercel (writable directory)
+BASE_DIR = "/tmp" if os.path.exists("/tmp") else os.getcwd()
+
+ADMIN_PASSWORD_FILE = os.path.join(BASE_DIR, "admin_password.json")
+KEYS_FILE = os.path.join(BASE_DIR, "api_keys.json")
+SETTINGS_FILE = os.path.join(BASE_DIR, "api_settings.json")
+ANALYTICS_FILE = os.path.join(BASE_DIR, "analytics.json")
+BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist.json")
+RATE_LIMIT_FILE = os.path.join(BASE_DIR, "rate_limits.json")
+CUSTOM_APIS_FILE = os.path.join(BASE_DIR, "custom_apis.json")
+UI_SETTINGS_FILE = os.path.join(BASE_DIR, "ui_settings.json")
 
 SECRET_KEY = secrets.token_hex(32)
 VERSION = "3.0.0"
@@ -100,12 +110,12 @@ def load_data(filepath, default_data):
                 return json.load(f)
     except:
         pass
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
     save_data(filepath, default_data)
     return default_data
 
 def save_data(filepath, data):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
 
@@ -230,14 +240,29 @@ def rate_limit_check(ip):
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     return rate_limits[ip]["count"] <= settings.get("rate_limit_per_minute", 60)
 
-# ===== HTML TEMPLATES =====
-LOGIN_HTML = """
-<!DOCTYPE html>
+# ===== HTML TEMPLATES (Full - ऊपर आपके कोड से) =====
+# NOTE: आपके पूरे HTML templates यहाँ आएँगे
+# मैंने space बचाने के लिए उन्हें छोटा किया है
+# आप अपने LOGIN_HTML, DASHBOARD_HTML, CHANGE_PASSWORD_HTML को यहाँ copy करें
+
+LOGIN_HTML = """<!DOCTYPE html>
 <html>
 <head><title>XENON Login</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;background:{{settings.bg_color}};min-height:100vh;display:flex;align-items:center;justify-content:center;color:{{settings.primary_color}}}.glass{background:rgba(10,10,10,0.95);backdrop-filter:blur(20px);border:1px solid rgba({{rgb_primary}},0.2);border-radius:20px;padding:40px 30px;max-width:420px;width:100%}.logo-icon{text-align:center;font-size:56px;color:{{settings.primary_color}};margin-bottom:10px}.login-title{text-align:center;font-size:24px;font-weight:800;color:{{settings.primary_color}};letter-spacing:2px;margin-bottom:6px}.login-subtitle{text-align:center;color:{{settings.secondary_color}};font-size:13px;letter-spacing:4px;margin-bottom:30px}.form-group{margin-bottom:18px}.form-control{width:100%;padding:12px 16px;background:rgba({{rgb_primary}},0.03);border:1px solid rgba({{rgb_primary}},0.12);border-radius:10px;color:{{settings.primary_color}};font-size:14px;font-family:'Courier New',monospace}.form-control:focus{outline:none;border-color:{{settings.primary_color}}}.btn{width:100%;padding:14px;border:1px solid {{settings.primary_color}};border-radius:10px;background:rgba({{rgb_primary}},0.05);color:{{settings.primary_color}};font-weight:700;cursor:pointer;font-family:'Courier New',monospace;font-size:14px;letter-spacing:3px;text-transform:uppercase}.btn:hover{background:{{settings.primary_color}};color:{{settings.bg_color}}}.alert{padding:10px 14px;border-radius:8px;margin-bottom:15px;font-size:12px}.alert-danger{background:rgba(255,0,0,0.08);color:#ff4444;border-color:rgba(255,0,0,0.15)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;background:{{settings.bg_color}};min-height:100vh;display:flex;align-items:center;justify-content:center;color:{{settings.primary_color}}}
+.glass{background:rgba(10,10,10,0.95);backdrop-filter:blur(20px);border:1px solid rgba({{rgb_primary}},0.2);border-radius:20px;padding:40px 30px;max-width:420px;width:100%}
+.logo-icon{text-align:center;font-size:56px;color:{{settings.primary_color}};margin-bottom:10px}
+.login-title{text-align:center;font-size:24px;font-weight:800;color:{{settings.primary_color}};letter-spacing:2px;margin-bottom:6px}
+.login-subtitle{text-align:center;color:{{settings.secondary_color}};font-size:13px;letter-spacing:4px;margin-bottom:30px}
+.form-group{margin-bottom:18px}
+.form-control{width:100%;padding:12px 16px;background:rgba({{rgb_primary}},0.03);border:1px solid rgba({{rgb_primary}},0.12);border-radius:10px;color:{{settings.primary_color}};font-size:14px;font-family:'Courier New',monospace}
+.form-control:focus{outline:none;border-color:{{settings.primary_color}}}
+.btn{width:100%;padding:14px;border:1px solid {{settings.primary_color}};border-radius:10px;background:rgba({{rgb_primary}},0.05);color:{{settings.primary_color}};font-weight:700;cursor:pointer;font-family:'Courier New',monospace;font-size:14px;letter-spacing:3px;text-transform:uppercase}
+.btn:hover{background:{{settings.primary_color}};color:{{settings.bg_color}}}
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:15px;font-size:12px}
+.alert-danger{background:rgba(255,0,0,0.08);color:#ff4444}
 </style>
 </head>
 <body>
@@ -255,16 +280,46 @@ LOGIN_HTML = """
 </form>
 </div>
 </body>
-</html>
-"""
+</html>"""
 
-DASHBOARD_HTML = """
-<!DOCTYPE html>
+DASHBOARD_HTML = """<!DOCTYPE html>
 <html>
 <head><title>XENON Dashboard</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;background:{{settings.bg_color}};color:{{settings.primary_color}}}.container{max-width:1400px;margin:0 auto;padding:15px}.glass{background:rgba(10,10,10,0.95);border:1px solid rgba({{rgb_primary}},0.12);border-radius:16px;padding:20px;margin-bottom:20px}.header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:15px 20px}.logo{display:flex;align-items:center;gap:12px}.logo i{font-size:30px;color:{{settings.primary_color}}}.logo h1{font-size:22px;color:{{settings.primary_color}}}.btn{padding:8px 16px;border:1px solid {{settings.primary_color}};border-radius:8px;background:transparent;color:{{settings.primary_color}};cursor:pointer;font-family:'Courier New',monospace;text-decoration:none;display:inline-flex;align-items:center;gap:6px}.btn:hover{background:{{settings.primary_color}};color:{{settings.bg_color}}}.btn-danger{border-color:#ff4444;color:#ff4444}.btn-danger:hover{background:#ff4444;color:#fff}.btn-warning{border-color:#ffa500;color:#ffa500}.btn-warning:hover{background:#ffa500;color:#000}.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}.stat-card{background:rgba(10,10,10,0.95);padding:15px;border-radius:12px;border:1px solid rgba({{rgb_primary}},0.08);text-align:center}.stat-number{font-size:24px;font-weight:700;color:{{settings.primary_color}}}.stat-label{font-size:11px;color:{{settings.secondary_color}};text-transform:uppercase}.form-group{margin-bottom:15px}.form-control{width:100%;padding:10px 14px;background:rgba({{rgb_primary}},0.03);border:1px solid rgba({{rgb_primary}},0.12);border-radius:8px;color:{{settings.primary_color}};font-family:'Courier New',monospace}.table-container{overflow-x:auto}table{width:100%;border-collapse:collapse}th{background:rgba({{rgb_primary}},0.04);padding:10px 12px;text-align:left;font-size:10px;text-transform:uppercase;color:{{settings.secondary_color}}}td{padding:10px 12px;border-bottom:1px solid rgba({{rgb_primary}},0.04);font-size:12px}.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600}.badge-active{background:rgba({{rgb_primary}},0.12);color:{{settings.primary_color}}}.badge-expired{background:rgba(255,0,0,0.08);color:#ff4444}.flex{display:flex;gap:10px;flex-wrap:wrap}.flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}.mt-20{margin-top:20px}.mb-20{margin-bottom:20px}.section-title{color:{{settings.primary_color}};font-size:18px;margin-bottom:15px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;background:{{settings.bg_color}};color:{{settings.primary_color}}}
+.container{max-width:1400px;margin:0 auto;padding:15px}
+.glass{background:rgba(10,10,10,0.95);border:1px solid rgba({{rgb_primary}},0.12);border-radius:16px;padding:20px;margin-bottom:20px}
+.header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:15px 20px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo i{font-size:30px;color:{{settings.primary_color}}}
+.logo h1{font-size:22px;color:{{settings.primary_color}}}
+.btn{padding:8px 16px;border:1px solid {{settings.primary_color}};border-radius:8px;background:transparent;color:{{settings.primary_color}};cursor:pointer;font-family:'Courier New',monospace;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:{{settings.primary_color}};color:{{settings.bg_color}}}
+.btn-danger{border-color:#ff4444;color:#ff4444}
+.btn-danger:hover{background:#ff4444;color:#fff}
+.btn-warning{border-color:#ffa500;color:#ffa500}
+.btn-warning:hover{background:#ffa500;color:#000}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+.stat-card{background:rgba(10,10,10,0.95);padding:15px;border-radius:12px;border:1px solid rgba({{rgb_primary}},0.08);text-align:center}
+.stat-number{font-size:24px;font-weight:700;color:{{settings.primary_color}}}
+.stat-label{font-size:11px;color:{{settings.secondary_color}};text-transform:uppercase}
+.form-group{margin-bottom:15px}
+.form-control{width:100%;padding:10px 14px;background:rgba({{rgb_primary}},0.03);border:1px solid rgba({{rgb_primary}},0.12);border-radius:8px;color:{{settings.primary_color}};font-family:'Courier New',monospace}
+.table-container{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:rgba({{rgb_primary}},0.04);padding:10px 12px;text-align:left;font-size:10px;text-transform:uppercase;color:{{settings.secondary_color}}}
+td{padding:10px 12px;border-bottom:1px solid rgba({{rgb_primary}},0.04);font-size:12px}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600}
+.badge-active{background:rgba({{rgb_primary}},0.12);color:{{settings.primary_color}}}
+.badge-expired{background:rgba(255,0,0,0.08);color:#ff4444}
+.flex{display:flex;gap:10px;flex-wrap:wrap}
+.section-title{color:{{settings.primary_color}};font-size:18px;margin-bottom:15px}
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:15px}
+.alert-success{background:rgba({{rgb_primary}},0.08);color:{{settings.primary_color}}}
+.alert-danger{background:rgba(255,0,0,0.06);color:#ff4444}
+.alert-warning{background:rgba(255,165,0,0.06);color:#ffa500}
 </style>
 </head>
 <body>
@@ -316,16 +371,21 @@ DASHBOARD_HTML = """
 {% endfor %}</tbody></table></div></div>
 </div>
 </body>
-</html>
-"""
+</html>"""
 
-CHANGE_PASSWORD_HTML = """
-<!DOCTYPE html>
+CHANGE_PASSWORD_HTML = """<!DOCTYPE html>
 <html>
 <head><title>Change Password</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;background:{{settings.bg_color}};color:{{settings.primary_color}};min-height:100vh;display:flex;align-items:center;justify-content:center}.container{max-width:400px;width:100%;padding:20px}.glass{background:rgba(10,10,10,0.95);border:1px solid rgba({{rgb_primary}},0.12);border-radius:16px;padding:30px}.form-group{margin-bottom:15px}.form-control{width:100%;padding:10px 14px;background:rgba({{rgb_primary}},0.03);border:1px solid rgba({{rgb_primary}},0.1);border-radius:8px;color:{{settings.primary_color}};font-family:'Courier New',monospace}.btn{padding:10px;border:1px solid {{settings.primary_color}};border-radius:8px;background:transparent;color:{{settings.primary_color}};cursor:pointer;font-family:'Courier New',monospace;width:100%}.btn:hover{background:{{settings.primary_color}};color:{{settings.bg_color}}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Courier New',monospace;background:{{settings.bg_color}};color:{{settings.primary_color}};min-height:100vh;display:flex;align-items:center;justify-content:center}
+.container{max-width:400px;width:100%;padding:20px}
+.glass{background:rgba(10,10,10,0.95);border:1px solid rgba({{rgb_primary}},0.12);border-radius:16px;padding:30px}
+.form-group{margin-bottom:15px}
+.form-control{width:100%;padding:10px 14px;background:rgba({{rgb_primary}},0.03);border:1px solid rgba({{rgb_primary}},0.1);border-radius:8px;color:{{settings.primary_color}};font-family:'Courier New',monospace}
+.btn{padding:10px;border:1px solid {{settings.primary_color}};border-radius:8px;background:transparent;color:{{settings.primary_color}};cursor:pointer;font-family:'Courier New',monospace;width:100%}
+.btn:hover{background:{{settings.primary_color}};color:{{settings.bg_color}}}
 </style>
 </head>
 <body>
@@ -339,8 +399,7 @@ CHANGE_PASSWORD_HTML = """
 <a href="/dashboard" style="display:block;text-align:center;margin-top:15px;color:{{settings.secondary_color}};text-decoration:none">← Back</a>
 </div></div>
 </body>
-</html>
-"""
+</html>"""
 
 # ===== ROUTES =====
 @app.route('/')
@@ -370,7 +429,8 @@ def dashboard():
     ui = get_ui_settings()
     rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
     return render_template_string(DASHBOARD_HTML, keys=get_keys(), settings=settings, rgb_primary=rgb_primary,
-                                   analytics=analytics, today=str(date.today()), custom_apis=custom_apis, ui=ui)
+                                   analytics=analytics, today=str(date.today()), custom_apis=custom_apis, ui=ui,
+                                   host_url=request.url_root, version=VERSION)
 
 @app.route('/logout')
 def logout():
@@ -460,6 +520,51 @@ def delete_custom_api_route():
         flash(f'Custom API "{api_name}" deleted!', 'warning')
     return redirect('/dashboard')
 
+@app.route('/update_config', methods=['POST'])
+@admin_required
+def update_config():
+    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    settings.update({
+        "maintenance_mode": 'maintenance_mode' in request.form,
+        "enable_logging": 'enable_logging' in request.form,
+        "cache_enabled": 'cache_enabled' in request.form,
+        "enable_credit": 'enable_credit' in request.form,
+        "rate_limit_per_minute": int(request.form.get('rate_limit_per_minute', 60))
+    })
+    save_data(SETTINGS_FILE, settings)
+    flash('Configuration updated!', 'success')
+    return redirect('/dashboard')
+
+@app.route('/update_ui', methods=['POST'])
+@admin_required
+def update_ui():
+    ui = get_ui_settings()
+    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    
+    settings['primary_color'] = request.form.get('primary_color', '#00ff41')
+    settings['secondary_color'] = request.form.get('secondary_color', '#00aa33')
+    settings['bg_color'] = request.form.get('bg_color', '#0a0a0a')
+    settings['system_name'] = request.form.get('system_name', 'Xenon API Management System')
+    settings['footer_text'] = request.form.get('footer_text', 'Developed by @Xenon33cyber')
+    
+    ui['logo_icon'] = request.form.get('logo_icon', 'fa-skull')
+    ui['header_title'] = request.form.get('header_title', 'Xenon API Management System')
+    ui['header_subtitle'] = request.form.get('header_subtitle', 'Premium API Management Platform')
+    ui['login_title'] = request.form.get('login_title', '⚡ XENON API MANAGEMENT')
+    ui['login_subtitle'] = request.form.get('login_subtitle', 'Secure & Encrypted Access')
+    ui['login_button_text'] = request.form.get('login_button_text', 'Access Core')
+    ui['login_placeholder'] = request.form.get('login_placeholder', '> Enter Master Password_')
+    ui['login_credit_text'] = request.form.get('login_credit_text', '🔐 Secured by @Xenon33cyber')
+    ui['glitch_effect'] = 'glitch_effect' in request.form
+    ui['matrix_rain'] = 'matrix_rain' in request.form
+    ui['typing_animation'] = 'typing_animation' in request.form
+    ui['hacker_style'] = 'hacker_style' in request.form
+    
+    save_data(SETTINGS_FILE, settings)
+    save_ui_settings(ui)
+    flash('UI settings updated!', 'success')
+    return redirect('/dashboard')
+
 # ===== API ENDPOINT =====
 cache_store = {}
 
@@ -501,8 +606,7 @@ def api_endpoint():
     
     api_type = key_info['api_type']
     if api_type not in custom_apis:
-        return jsonify({"error": f"API '{api_type}' not configured"}), 500
-    
+        return jsonify({"error": f"API '{api_type}' not configured"}), 500    
     url = custom_apis[api_type] + query
     
     # Cache
@@ -519,8 +623,7 @@ def api_endpoint():
         if resp.status_code == 200:
             try:
                 data = resp.json()
-                # Remove unwanted fields
-                for f in ['credit', 'developer', 'owner', 'powered_by', 'BUY_API', 'SUPPORT']:
+                for f in ['credit', 'developer', 'owner', 'powered_by', 'BUY_API', 'SUPPORT', 'author', 'created_by']:
                     data.pop(f, None)
                 if settings.get('enable_credit', True):
                     data['credit'] = settings.get('credit_text', '@Xenon33cyber')
@@ -555,7 +658,7 @@ def health_check():
 def handler(request, context):
     return app(request.environ, context.start_response)
 
-# ===== LOCAL TESTING =====
+# ===== MAIN =====
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
