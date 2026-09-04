@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Xenon API Management System v3.3.1 (Fully Responsive)
+Xenon API Management System v3.4.0 (Ultimate Customization)
 Owner: @Xenon33cyber
 Developer: @Xenon33cyber
 Deploy: Localhost / Render / Vercel
@@ -42,7 +42,7 @@ UI_SETTINGS_FILE = os.path.join(BASE_DIR, "ui_settings.json")
 ADV_UI_FILE = os.path.join(BASE_DIR, "adv_ui_settings.json")
 
 SECRET_KEY = secrets.token_hex(32)
-VERSION = "3.3.1"
+VERSION = "3.4.0"
 MAX_KEYS_PER_USER = 100
 API_NAME = "Xenon API Management System"
 
@@ -62,7 +62,8 @@ DEFAULT_SETTINGS = {
     "footer_text": "Developed by @Xenon33cyber",
     "primary_color": "#00ff41",
     "secondary_color": "#00aa33",
-    "bg_color": "#0a0a0a"
+    "bg_color": "#0a0a0a",
+    "accent_color": "#ff00ff"   # new
 }
 
 DEFAULT_UI = {
@@ -107,13 +108,22 @@ DEFAULT_UI = {
 
 DEFAULT_ADV_UI = {
     "font_family": "'Courier New', monospace",
+    "font_size_base": "14px",
+    "heading_font_size": "24px",
     "border_radius": "16px",
     "glass_opacity": "0.95",
     "blur_amount": "20px",
     "animation_speed": "1",
     "show_scanlines": True,
     "glow_intensity": "0.05",
-    "card_spacing": "15px"
+    "card_spacing": "15px",
+    "custom_css": "",
+    "button_style": "default",  # default, round, square, neon
+    "table_style": "default",   # default, striped, bordered
+    "background_pattern": "none",  # none, dots, grid, circuit
+    "accent_color": "#ff00ff",
+    "status_online_text": "Online",
+    "status_offline_text": "Offline"
 }
 
 app.secret_key = SECRET_KEY
@@ -207,7 +217,6 @@ def get_blacklist():
     return load_data(BLACKLIST_FILE, {"ips": [], "keys": []})
 
 def get_custom_apis():
-    """Returns dict with api_name -> {url, active, maintenance, response_override}"""
     data = load_data(CUSTOM_APIS_FILE, {})
     for name, cfg in data.items():
         if not isinstance(cfg, dict):
@@ -287,19 +296,19 @@ def rate_limit_check(ip):
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     return rate_limits[ip]["count"] <= settings.get("rate_limit_per_minute", 60)
 
-# ===== LOGIN HTML (Responsive) =====
+# ===== LOGIN HTML =====
 LOGIN_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>XENON • Login</title>
+    <title>{{ ui.login_title|striptags }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Courier New', monospace;
+            font-family: {{ adv.font_family }};
             background: {{ settings.bg_color }};
             min-height: 100vh;
             display: flex;
@@ -338,12 +347,12 @@ LOGIN_HTML = """
             padding: 20px;
         }
         .glass {
-            background: rgba(10,10,10,0.92);
-            backdrop-filter: blur(20px);
+            background: rgba(10,10,10,{{ adv.glass_opacity }});
+            backdrop-filter: blur({{ adv.blur_amount }});
             border: 1px solid rgba({{ rgb_primary }},0.2);
-            border-radius: 20px;
+            border-radius: {{ adv.border_radius }};
             padding: 40px 30px;
-            box-shadow: 0 0 60px rgba({{ rgb_primary }},0.05);
+            box-shadow: 0 0 60px rgba({{ rgb_primary }},{{ adv.glow_intensity }});
             position: relative;
             overflow: hidden;
         }
@@ -355,28 +364,29 @@ LOGIN_HTML = """
             width: 200%;
             height: 200%;
             background: radial-gradient(circle at 50% 50%, rgba({{ rgb_primary }},0.03) 0%, transparent 70%);
-            animation: rotateGlow 20s linear infinite;
+            animation: rotateGlow {{ 20|float / adv.animation_speed|float }}s linear infinite;
             pointer-events: none;
         }
         @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .logo-icon { text-align: center; font-size: 56px; color: {{ settings.primary_color }}; margin-bottom: 10px; text-shadow: 0 0 60px rgba({{ rgb_primary }},0.2); }
-        .login-title { text-align: center; font-size: 24px; font-weight: 800; color: {{ settings.primary_color }}; text-shadow: 0 0 40px rgba({{ rgb_primary }},0.15); letter-spacing: 2px; margin-bottom: 6px; }
+        .login-title { text-align: center; font-size: {{ adv.heading_font_size }}; font-weight: 800; color: {{ settings.primary_color }}; text-shadow: 0 0 40px rgba({{ rgb_primary }},0.15); letter-spacing: 2px; margin-bottom: 6px; }
         .login-title .glitch { {% if ui.glitch_effect %}animation: glitch 3s infinite;{% endif %} }
         @keyframes glitch { 0%,95%,100% { transform: skew(0deg); opacity:1; } 96% { transform: skew(-2deg); opacity:0.8; } 97% { transform: skew(2deg); opacity:0.9; } 98% { transform: skew(-1deg); opacity:0.7; } }
         .login-subtitle { text-align: center; color: {{ settings.secondary_color }}; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 30px; font-weight: 300; }
         .form-group { margin-bottom: 18px; position: relative; }
-        .form-control { width: 100%; padding: 12px 16px; background: rgba({{ rgb_primary }},0.03); border: 1px solid rgba({{ rgb_primary }},0.12); border-radius: 10px; color: {{ settings.primary_color }}; font-size: 14px; transition: all 0.3s ease; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+        .form-control { width: 100%; padding: 12px 16px; background: rgba({{ rgb_primary }},0.03); border: 1px solid rgba({{ rgb_primary }},0.12); border-radius: {{ adv.border_radius }}; color: {{ settings.primary_color }}; font-size: {{ adv.font_size_base }}; transition: all 0.3s ease; font-family: {{ adv.font_family }}; letter-spacing: 1px; }
         .form-control:focus { outline: none; border-color: {{ settings.primary_color }}; box-shadow: 0 0 40px rgba({{ rgb_primary }},0.08); background: rgba({{ rgb_primary }},0.05); }
         .form-control::placeholder { color: {{ settings.secondary_color }}; opacity: 0.3; letter-spacing: 2px; }
-        .btn { width: 100%; padding: 14px; border: 1px solid {{ settings.primary_color }}; border-radius: 10px; background: rgba({{ rgb_primary }},0.05); color: {{ settings.primary_color }}; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-family: 'Courier New', monospace; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; position: relative; overflow: hidden; }
+        .btn { width: 100%; padding: 14px; border: 1px solid {{ settings.primary_color }}; border-radius: {{ adv.border_radius }}; background: rgba({{ rgb_primary }},0.05); color: {{ settings.primary_color }}; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-family: {{ adv.font_family }}; font-size: {{ adv.font_size_base }}; letter-spacing: 3px; text-transform: uppercase; position: relative; overflow: hidden; }
         .btn:hover { background: {{ settings.primary_color }}; color: {{ settings.bg_color }}; box-shadow: 0 0 50px rgba({{ rgb_primary }},0.15); transform: translateY(-2px); }
         .btn::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); opacity: 0; transition: opacity 0.5s; }
         .btn:hover::after { opacity: 1; }
         .login-footer { margin-top: 20px; text-align: center; }
         .login-footer .credit { color: {{ settings.secondary_color }}; font-size: 10px; opacity: 0.5; letter-spacing: 1px; }
-        .alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; border: 1px solid transparent; letter-spacing: 0.5px; }
+        .alert { padding: 10px 14px; border-radius: {{ adv.border_radius }}; margin-bottom: 15px; font-size: 12px; border: 1px solid transparent; letter-spacing: 0.5px; }
         .alert-danger { background: rgba(255,0,0,0.08); color: #ff4444; border-color: rgba(255,0,0,0.15); }
         .alert-success { background: rgba({{ rgb_primary }},0.08); color: {{ settings.primary_color }}; border-color: rgba({{ rgb_primary }},0.15); }
+        {% if adv.custom_css %}{{ adv.custom_css }}{% endif %}
         @media (max-width:480px) { .glass { padding:25px 20px; } .login-title { font-size:18px; } .logo-icon { font-size:40px; } .btn { font-size:12px; } }
     </style>
 </head>
@@ -477,29 +487,29 @@ LOGIN_HTML = """
 </html>
 """
 
-# ===== DASHBOARD HTML (Responsive) =====
+# ===== DASHBOARD HTML =====
 DASHBOARD_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>XENON • Dashboard</title>
+    <title>{{ ui.header_title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family:'Courier New',monospace;
-            background:{{ settings.bg_color }};
+            font-family: {{ adv.font_family }};
+            background: {{ settings.bg_color }};
             min-height:100vh;
             color:{{ settings.primary_color }};
             background-image:radial-gradient(circle at 20% 50%, rgba({{ rgb_primary }},0.03) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba({{ rgb_primary }},0.03) 0%, transparent 50%);
         }
         ::selection { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
         .container { max-width:1400px; margin:0 auto; padding:15px; }
-        .glass { background:rgba(10,10,10,0.95); backdrop-filter:blur(10px); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:16px; padding:20px; box-shadow:0 0 30px rgba({{ rgb_primary }},0.03); }
+        .glass { background:rgba(10,10,10,{{ adv.glass_opacity }}); backdrop-filter:blur({{ adv.blur_amount }}); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:{{ adv.border_radius }}; padding:20px; box-shadow:0 0 30px rgba({{ rgb_primary }},{{ adv.glow_intensity }}); }
         .glass:hover { border-color:rgba({{ rgb_primary }},0.2); }
-        .header { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; margin-bottom:20px; background:rgba(10,10,10,0.95); border-radius:16px; border:1px solid rgba({{ rgb_primary }},0.12); flex-wrap:wrap; gap:10px; }
+        .header { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; margin-bottom:20px; background:rgba(10,10,10,{{ adv.glass_opacity }}); border-radius:{{ adv.border_radius }}; border:1px solid rgba({{ rgb_primary }},0.12); flex-wrap:wrap; gap:10px; }
         .logo { display:flex; align-items:center; gap:12px; }
         .logo i { font-size:30px; color:{{ settings.primary_color }}; animation:pulse 2s infinite; text-shadow:0 0 20px rgba({{ rgb_primary }},0.15); }
         @keyframes pulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.05); opacity:0.7; } }
@@ -508,7 +518,7 @@ DASHBOARD_HTML = """
         .header-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
         .status-badge { padding:6px 12px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; border:1px solid rgba({{ rgb_primary }},0.2); }
         .status-online { background:rgba({{ rgb_primary }},0.08); color:{{ settings.primary_color }}; }
-        .btn { padding:8px 16px; border:1px solid {{ settings.primary_color }}; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; font-size:13px; text-decoration:none; white-space:nowrap; font-family:'Courier New',monospace; background:transparent; color:{{ settings.primary_color }}; }
+        .btn { padding:8px 16px; border:1px solid {{ settings.primary_color }}; border-radius:{{ adv.border_radius }}; font-weight:600; cursor:pointer; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; font-size:13px; text-decoration:none; white-space:nowrap; font-family:{{ adv.font_family }}; background:transparent; color:{{ settings.primary_color }}; }
         .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.12); transform:translateY(-2px); }
         .btn-danger { border-color:#ff4444; color:#ff4444; }
         .btn-danger:hover { background:#ff4444; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba(255,0,0,0.15); }
@@ -522,15 +532,15 @@ DASHBOARD_HTML = """
         .btn-outline:hover { background:{{ settings.secondary_color }}; color:{{ settings.bg_color }}; }
         .btn-sm { padding:4px 10px; font-size:11px; }
         .btn-block { width:100%; justify-content:center; }
-        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; margin-bottom:20px; }
-        .stat-card { background:rgba(10,10,10,0.95); padding:15px; border-radius:12px; border:1px solid rgba({{ rgb_primary }},0.08); text-align:center; transition:all 0.3s ease; }
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:{{ adv.card_spacing }}; margin-bottom:20px; }
+        .stat-card { background:rgba(10,10,10,{{ adv.glass_opacity }}); padding:15px; border-radius:{{ adv.border_radius }}; border:1px solid rgba({{ rgb_primary }},0.08); text-align:center; transition:all 0.3s ease; }
         .stat-card:hover { transform:translateY(-4px); border-color:rgba({{ rgb_primary }},0.2); box-shadow:0 0 30px rgba({{ rgb_primary }},0.05); }
         .stat-card .stat-icon { font-size:20px; margin-bottom:8px; color:{{ settings.primary_color }}; }
         .stat-card .stat-number { font-size:24px; font-weight:700; color:{{ settings.primary_color }}; text-shadow:0 0 30px rgba({{ rgb_primary }},0.1); }
         .stat-card .stat-label { font-size:11px; color:{{ settings.secondary_color }}; margin-top:4px; text-transform:uppercase; letter-spacing:1px; }
         .form-group { margin-bottom:15px; }
         .form-group label { display:block; margin-bottom:6px; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:{{ settings.secondary_color }}; }
-        .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:8px; color:{{ settings.primary_color }}; font-size:14px; transition:all 0.3s ease; font-family:'Courier New',monospace; }
+        .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:{{ adv.border_radius }}; color:{{ settings.primary_color }}; font-size:{{ adv.font_size_base }}; transition:all 0.3s ease; font-family:{{ adv.font_family }}; }
         .form-control:focus { outline:none; border-color:{{ settings.primary_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.06); }
         .form-control::placeholder { color:{{ settings.secondary_color }}; opacity:0.3; }
         select.form-control option { background:{{ settings.bg_color }}; color:{{ settings.primary_color }}; }
@@ -543,11 +553,11 @@ DASHBOARD_HTML = """
         .badge-active { background:rgba({{ rgb_primary }},0.12); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.2); }
         .badge-expired { background:rgba(255,0,0,0.08); color:#ff4444; border-color:rgba(255,0,0,0.15); }
         .badge-custom { background:rgba({{ rgb_primary }},0.06); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.1); }
-        .copy-btn { background:rgba({{ rgb_primary }},0.04); color:{{ settings.primary_color }}; border:1px solid rgba({{ rgb_primary }},0.1); padding:4px 12px; border-radius:4px; cursor:pointer; font-size:11px; transition:all 0.3s ease; font-family:'Courier New',monospace; }
+        .copy-btn { background:rgba({{ rgb_primary }},0.04); color:{{ settings.primary_color }}; border:1px solid rgba({{ rgb_primary }},0.1); padding:4px 12px; border-radius:{{ adv.border_radius }}; cursor:pointer; font-size:11px; transition:all 0.3s ease; font-family:{{ adv.font_family }}; }
         .copy-btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 20px rgba({{ rgb_primary }},0.1); }
         .copy-btn.copied { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
-        .url-display { background:rgba({{ rgb_primary }},0.02); padding:6px 10px; border-radius:4px; font-size:10px; word-break:break-all; font-family:'Courier New',monospace; border-left:2px solid {{ settings.primary_color }}; max-width:250px; margin-bottom:4px; color:{{ settings.secondary_color }}; }
-        .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+        .url-display { background:rgba({{ rgb_primary }},0.02); padding:6px 10px; border-radius:{{ adv.border_radius }}; font-size:10px; word-break:break-all; font-family:{{ adv.font_family }}; border-left:2px solid {{ settings.primary_color }}; max-width:250px; margin-bottom:4px; color:{{ settings.secondary_color }}; }
+        .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:{{ adv.card_spacing }}; }
         .flex-between { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
         .text-muted { color:{{ settings.secondary_color }}; font-size:12px; }
         .mt-20 { margin-top:20px; }
@@ -555,7 +565,7 @@ DASHBOARD_HTML = """
         .flex { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
         .section-title { color:{{ settings.primary_color }}; margin-bottom:15px; font-size:18px; text-shadow:0 0 30px rgba({{ rgb_primary }},0.05); letter-spacing:1px; }
         .section-title i { margin-right:8px; }
-        .credit-section { background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.06); border-radius:8px; padding:12px; margin-top:10px; text-align:center; }
+        .credit-section { background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.06); border-radius:{{ adv.border_radius }}; padding:12px; margin-top:10px; text-align:center; }
         .credit-section .credit-text { color:{{ settings.primary_color }}; font-weight:600; }
         .toggle { position:relative; display:inline-block; width:44px; height:24px; }
         .toggle input { opacity:0; width:0; height:0; }
@@ -563,18 +573,19 @@ DASHBOARD_HTML = """
         .toggle .slider:before { position:absolute; content:""; height:16px; width:16px; left:3px; bottom:3px; background:{{ settings.secondary_color }}; transition:.3s; border-radius:50%; }
         .toggle input:checked + .slider { background:rgba({{ rgb_primary }},0.15); border-color:{{ settings.primary_color }}; }
         .toggle input:checked + .slider:before { transform:translateX(20px); background:{{ settings.primary_color }}; }
-        .toast { position:fixed; bottom:20px; right:20px; background:rgba({{ rgb_primary }},0.1); color:{{ settings.primary_color }}; padding:14px 20px; border-radius:12px; border:1px solid rgba({{ rgb_primary }},0.12); box-shadow:0 4px 30px rgba(0,0,0,0.5); display:none; animation:slideUp 0.3s ease; z-index:1000; font-size:14px; font-family:'Courier New',monospace; }
+        .toast { position:fixed; bottom:20px; right:20px; background:rgba({{ rgb_primary }},0.1); color:{{ settings.primary_color }}; padding:14px 20px; border-radius:{{ adv.border_radius }}; border:1px solid rgba({{ rgb_primary }},0.12); box-shadow:0 4px 30px rgba(0,0,0,0.5); display:none; animation:slideUp 0.3s ease; z-index:1000; font-size:14px; font-family:{{ adv.font_family }}; }
         @keyframes slideUp { from { transform:translateY(100px); opacity:0; } to { transform:translateY(0); opacity:1; } }
         .key-gen-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .key-gen-grid .full-width { grid-column:1 / -1; }
-        .alert { padding:12px 16px; border-radius:8px; margin-bottom:15px; font-size:13px; border:1px solid transparent; }
+        .alert { padding:12px 16px; border-radius:{{ adv.border_radius }}; margin-bottom:15px; font-size:13px; border:1px solid transparent; }
         .alert-success { background:rgba({{ rgb_primary }},0.08); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.12); }
         .alert-danger { background:rgba(255,0,0,0.06); color:#ff4444; border-color:rgba(255,0,0,0.1); }
         .alert-warning { background:rgba(255,165,0,0.06); color:#ffa500; border-color:rgba(255,165,0,0.1); }
         .alert-info { background:rgba(0,200,255,0.06); color:#00ccff; border-color:rgba(0,200,255,0.1); }
-        .footer-text { text-align:center; margin-top:25px; padding:15px; color:{{ settings.secondary_color }}; font-size:12px; border-top:1px solid rgba({{ rgb_primary }},0.05); font-family:'Courier New',monospace; letter-spacing:1px; }
+        .footer-text { text-align:center; margin-top:25px; padding:15px; color:{{ settings.secondary_color }}; font-size:12px; border-top:1px solid rgba({{ rgb_primary }},0.05); font-family:{{ adv.font_family }}; letter-spacing:1px; }
         .footer-text .highlight { color:{{ settings.primary_color }}; }
         .scanline { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba({{ rgb_primary }},0.01) 2px, rgba({{ rgb_primary }},0.01) 4px); z-index:9999; }
+        {% if adv.custom_css %}{{ adv.custom_css }}{% endif %}
         @media (max-width:768px) {
             .key-gen-grid { grid-template-columns:1fr; }
             .key-gen-grid .full-width { grid-column:1; }
@@ -608,7 +619,7 @@ DASHBOARD_HTML = """
     </style>
 </head>
 <body>
-<div class="scanline"></div>
+{% if adv.show_scanlines %}<div class="scanline"></div>{% endif %}
 <div class="container">
     <div class="header glass">
         <div class="logo">
@@ -619,7 +630,7 @@ DASHBOARD_HTML = """
             </div>
         </div>
         <div class="header-actions">
-            <span class="status-badge status-online"><i class="fas fa-circle" style="font-size:8px;"></i> Online</span>
+            <span class="status-badge status-online"><i class="fas fa-circle" style="font-size:8px;"></i> {{ adv.status_online_text }}</span>
             <a href="/api_management" class="btn btn-warning btn-sm"><i class="fas fa-plug"></i> API Management</a>
             <a href="/advanced_ui" class="btn btn-info btn-sm"><i class="fas fa-palette"></i> UI Settings</a>
             <button class="btn btn-outline btn-sm" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh</button>
@@ -656,7 +667,7 @@ DASHBOARD_HTML = """
             <div class="stat-label">{{ ui.stats_labels.custom }}</div>
         </div>
     </div>
-    <!-- ===== KEY GENERATION ===== -->
+    <!-- KEY GENERATION -->
     <div class="glass mb-20">
         <h3 class="section-title"><i class="fas fa-plus-circle"></i> {{ ui.key_gen_title }}</h3>
         <form method="POST" action="/generate">
@@ -697,7 +708,7 @@ DASHBOARD_HTML = """
             <span class="credit-text">{{ settings.credit_text }}</span>
         </div>
     </div>
-    <!-- ===== KEYS TABLE ===== -->
+    <!-- KEYS TABLE -->
     <div class="glass">
         <div class="flex-between mb-20">
             <h3 style="color:{{ settings.primary_color }};font-size:18px;text-shadow:0 0 30px rgba({{ rgb_primary }},0.05);">
@@ -811,7 +822,7 @@ DASHBOARD_HTML = """
                 <h4 style="color:{{ settings.secondary_color }};margin-bottom:12px;font-size:13px;">
                     <i class="fas fa-chart-bar"></i> {{ ui.settings_analytics_title }}
                 </h4>
-                <div style="background:rgba({{ rgb_primary }},0.015);padding:12px;border-radius:8px;max-height:250px;overflow-y:auto;border:1px solid rgba({{ rgb_primary }},0.04);">
+                <div style="background:rgba({{ rgb_primary }},0.015);padding:12px;border-radius:{{ adv.border_radius }};max-height:250px;overflow-y:auto;border:1px solid rgba({{ rgb_primary }},0.04);">
                     <div style="margin-bottom:8px;">
                         <strong style="color:{{ settings.primary_color }};font-size:12px;">API Usage:</strong>
                         {% for api, count in analytics.api_usage.items() %}
@@ -905,7 +916,7 @@ DASHBOARD_HTML = """
 </html>
 """
 
-# ===== CHANGE PASSWORD HTML (Responsive) =====
+# ===== CHANGE PASSWORD HTML =====
 CHANGE_PASSWORD_HTML = """
 <!DOCTYPE html>
 <html>
@@ -914,24 +925,25 @@ CHANGE_PASSWORD_HTML = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Courier New',monospace; background:{{ settings.bg_color }}; color:{{ settings.primary_color }}; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    body { font-family:{{ adv.font_family }}; background:{{ settings.bg_color }}; color:{{ settings.primary_color }}; min-height:100vh; display:flex; align-items:center; justify-content:center; }
     .container { max-width:400px; width:100%; padding:20px; }
-    .glass { background:rgba(10,10,10,0.95); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:16px; padding:30px; }
+    .glass { background:rgba(10,10,10,{{ adv.glass_opacity }}); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:{{ adv.border_radius }}; padding:30px; }
     .form-group { margin-bottom:15px; }
     .form-group label { display:block; margin-bottom:6px; font-size:12px; text-transform:uppercase; color:{{ settings.secondary_color }}; }
-    .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.1); border-radius:8px; color:{{ settings.primary_color }}; font-size:14px; font-family:'Courier New',monospace; }
+    .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.1); border-radius:{{ adv.border_radius }}; color:{{ settings.primary_color }}; font-size:{{ adv.font_size_base }}; font-family:{{ adv.font_family }}; }
     .form-control:focus { outline:none; border-color:{{ settings.primary_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.06); }
-    .btn { padding:10px 20px; border:1px solid {{ settings.primary_color }}; border-radius:8px; background:transparent; color:{{ settings.primary_color }}; cursor:pointer; font-family:'Courier New',monospace; font-weight:600; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:8px; text-decoration:none; width:100%; justify-content:center; }
+    .btn { padding:10px 20px; border:1px solid {{ settings.primary_color }}; border-radius:{{ adv.border_radius }}; background:transparent; color:{{ settings.primary_color }}; cursor:pointer; font-family:{{ adv.font_family }}; font-weight:600; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:8px; text-decoration:none; width:100%; justify-content:center; }
     .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.1); }
     .btn-success { border-color:{{ settings.primary_color }}; color:{{ settings.primary_color }}; }
     .btn-success:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
     .mt-20 { margin-top:20px; }
     .text-center { text-align:center; }
-    .alert { padding:10px 14px; border-radius:8px; margin-bottom:15px; font-size:13px; border:1px solid transparent; }
+    .alert { padding:10px 14px; border-radius:{{ adv.border_radius }}; margin-bottom:15px; font-size:13px; border:1px solid transparent; }
     .alert-success { background:rgba({{ rgb_primary }},0.08); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.1); }
     .alert-danger { background:rgba(255,0,0,0.06); color:#ff4444; border-color:rgba(255,0,0,0.1); }
     .logo-icon { font-size:40px; color:{{ settings.primary_color }}; text-align:center; margin-bottom:20px; }
     h2 { text-align:center; color:{{ settings.primary_color }}; text-shadow:0 0 30px rgba({{ rgb_primary }},0.05); margin-bottom:20px; }
+    {% if adv.custom_css %}{{ adv.custom_css }}{% endif %}
     @media (max-width:480px) { .glass { padding:20px; } .form-control { font-size:12px; } .btn { font-size:12px; } }
 </style>
 </head>
@@ -971,7 +983,7 @@ CHANGE_PASSWORD_HTML = """
 </html>
 """
 
-# ===== ADVANCED UI HTML (Responsive) =====
+# ===== ADVANCED UI PAGE (FULL MASTERY) =====
 ADV_UI_HTML = """
 <!DOCTYPE html>
 <html>
@@ -981,67 +993,221 @@ ADV_UI_HTML = """
 <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Courier New',monospace; background:{{ settings.bg_color }}; color:{{ settings.primary_color }}; min-height:100vh; padding:20px; }
-    .container { max-width:800px; margin:0 auto; }
-    .glass { background:rgba(10,10,10,0.95); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:16px; padding:30px; margin-bottom:20px; }
+    .container { max-width:1000px; margin:0 auto; }
+    .glass { background:rgba(10,10,10,0.95); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:16px; padding:25px; margin-bottom:20px; }
     h1 { text-align:center; color:{{ settings.primary_color }}; text-shadow:0 0 30px rgba({{ rgb_primary }},0.05); margin-bottom:20px; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
     .form-group { margin-bottom:15px; }
-    .form-group label { display:block; margin-bottom:6px; font-size:12px; text-transform:uppercase; color:{{ settings.secondary_color }}; }
-    .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.1); border-radius:8px; color:{{ settings.primary_color }}; font-size:14px; font-family:'Courier New',monospace; }
+    .form-group label { display:block; margin-bottom:6px; font-size:11px; text-transform:uppercase; color:{{ settings.secondary_color }}; }
+    .form-control, .form-control-color { width:100%; padding:8px 12px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.1); border-radius:8px; color:{{ settings.primary_color }}; font-size:14px; font-family:'Courier New',monospace; }
     .form-control:focus { outline:none; border-color:{{ settings.primary_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.06); }
-    .btn { padding:10px 20px; border:1px solid {{ settings.primary_color }}; border-radius:8px; background:transparent; color:{{ settings.primary_color }}; cursor:pointer; font-family:'Courier New',monospace; font-weight:600; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
-    .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.1); }
+    .form-control-color { height:50px; padding:4px; background:transparent; }
+    textarea.form-control { min-height:80px; font-size:12px; }
+    .btn { padding:8px 16px; border:1px solid {{ settings.primary_color }}; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; font-size:13px; text-decoration:none; font-family:'Courier New',monospace; background:transparent; color:{{ settings.primary_color }}; }
+    .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.12); transform:translateY(-2px); }
     .btn-success { border-color:{{ settings.primary_color }}; color:{{ settings.primary_color }}; }
     .btn-success:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
     .btn-block { width:100%; justify-content:center; }
     .mt-20 { margin-top:20px; }
+    .text-center { text-align:center; }
     .flex { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
-    @media (max-width:600px){ .grid-2 { grid-template-columns:1fr; } }
-    @media (max-width:480px){ .glass { padding:20px; } .btn { font-size:12px; } }
+    .section-title { color:{{ settings.primary_color }}; margin:20px 0 10px 0; font-size:16px; border-bottom:1px solid rgba({{ rgb_primary }},0.1); padding-bottom:8px; }
+    .inline-check { display:flex; align-items:center; gap:8px; }
+    @media (max-width:768px) { .grid-2 { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <div class="container">
     <div class="glass">
-        <h1><i class="fas fa-palette"></i> Advanced UI Customization</h1>
-        <p style="color:{{ settings.secondary_color }};font-size:13px;text-align:center;margin-bottom:20px;">Fine‑tune every visual aspect of your dashboard and login page.</p>
+        <h1><i class="fas fa-palette"></i> Master UI Customization</h1>
+        <p style="color:{{ settings.secondary_color }};font-size:13px;text-align:center;margin-bottom:20px;">Change every single text, color, font, animation, and even inject custom CSS.</p>
+        <a href="/dashboard" class="btn" style="border-color:{{ settings.secondary_color }};color:{{ settings.secondary_color }};"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        <hr style="border-color:rgba({{ rgb_primary }},0.1);margin:20px 0;">
         <form method="POST" action="/update_adv_ui">
             <div class="grid-2">
+                <!-- Colors -->
+                <div class="form-group">
+                    <label>Primary Color</label>
+                    <input type="color" name="primary_color" class="form-control-color" value="{{ settings.primary_color }}">
+                </div>
+                <div class="form-group">
+                    <label>Secondary Color</label>
+                    <input type="color" name="secondary_color" class="form-control-color" value="{{ settings.secondary_color }}">
+                </div>
+                <div class="form-group">
+                    <label>Background Color</label>
+                    <input type="color" name="bg_color" class="form-control-color" value="{{ settings.bg_color }}">
+                </div>
+                <div class="form-group">
+                    <label>Accent Color</label>
+                    <input type="color" name="accent_color" class="form-control-color" value="{{ settings.accent_color }}">
+                </div>
+                <!-- Fonts -->
                 <div class="form-group">
                     <label>Font Family</label>
                     <input type="text" name="font_family" class="form-control" value="{{ adv.font_family }}" placeholder="'Courier New', monospace">
                 </div>
                 <div class="form-group">
-                    <label>Border Radius (e.g., 16px)</label>
+                    <label>Base Font Size</label>
+                    <input type="text" name="font_size_base" class="form-control" value="{{ adv.font_size_base }}" placeholder="14px">
+                </div>
+                <div class="form-group">
+                    <label>Heading Font Size</label>
+                    <input type="text" name="heading_font_size" class="form-control" value="{{ adv.heading_font_size }}" placeholder="24px">
+                </div>
+                <div class="form-group">
+                    <label>Border Radius</label>
                     <input type="text" name="border_radius" class="form-control" value="{{ adv.border_radius }}" placeholder="16px">
                 </div>
+                <!-- Glass & Effects -->
                 <div class="form-group">
-                    <label>Glass Opacity (0–1)</label>
-                    <input type="number" step="0.01" min="0" max="1" name="glass_opacity" class="form-control" value="{{ adv.glass_opacity }}" placeholder="0.95">
+                    <label>Glass Opacity (0-1)</label>
+                    <input type="number" step="0.01" min="0" max="1" name="glass_opacity" class="form-control" value="{{ adv.glass_opacity }}">
                 </div>
                 <div class="form-group">
-                    <label>Blur Amount (e.g., 20px)</label>
+                    <label>Blur Amount</label>
                     <input type="text" name="blur_amount" class="form-control" value="{{ adv.blur_amount }}" placeholder="20px">
                 </div>
                 <div class="form-group">
                     <label>Animation Speed (multiplier)</label>
-                    <input type="number" step="0.1" min="0.1" name="animation_speed" class="form-control" value="{{ adv.animation_speed }}" placeholder="1">
+                    <input type="number" step="0.1" min="0.1" name="animation_speed" class="form-control" value="{{ adv.animation_speed }}">
                 </div>
                 <div class="form-group">
-                    <label>Glow Intensity (0–1)</label>
-                    <input type="number" step="0.01" min="0" max="1" name="glow_intensity" class="form-control" value="{{ adv.glow_intensity }}" placeholder="0.05">
+                    <label>Glow Intensity (0-1)</label>
+                    <input type="number" step="0.01" min="0" max="1" name="glow_intensity" class="form-control" value="{{ adv.glow_intensity }}">
                 </div>
                 <div class="form-group">
                     <label>Card Spacing (px)</label>
                     <input type="text" name="card_spacing" class="form-control" value="{{ adv.card_spacing }}" placeholder="15px">
                 </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:20px;">
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <div class="form-group inline-check">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                         <input type="checkbox" name="show_scanlines" {% if adv.show_scanlines %}checked{% endif %}> Show Scanlines
                     </label>
                 </div>
+                <!-- Status Text -->
+                <div class="form-group">
+                    <label>Status Online Text</label>
+                    <input type="text" name="status_online_text" class="form-control" value="{{ adv.status_online_text }}" placeholder="Online">
+                </div>
+                <div class="form-group">
+                    <label>Status Offline Text</label>
+                    <input type="text" name="status_offline_text" class="form-control" value="{{ adv.status_offline_text }}" placeholder="Offline">
+                </div>
+                <!-- Custom CSS -->
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Custom CSS (inject any styles)</label>
+                    <textarea name="custom_css" class="form-control" rows="4">{{ adv.custom_css }}</textarea>
+                </div>
             </div>
-            <button type="submit" class="btn btn-success btn-block mt-20"><i class="fas fa-save"></i> Apply Advanced UI</button>
+            <!-- UI Text Customization -->
+            <h3 class="section-title"><i class="fas fa-font"></i> All Text Strings</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Header Title</label>
+                    <input type="text" name="header_title" class="form-control" value="{{ ui.header_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Header Subtitle</label>
+                    <input type="text" name="header_subtitle" class="form-control" value="{{ ui.header_subtitle }}">
+                </div>
+                <div class="form-group">
+                    <label>Login Title</label>
+                    <input type="text" name="login_title" class="form-control" value="{{ ui.login_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Login Subtitle</label>
+                    <input type="text" name="login_subtitle" class="form-control" value="{{ ui.login_subtitle }}">
+                </div>
+                <div class="form-group">
+                    <label>Login Button Text</label>
+                    <input type="text" name="login_button_text" class="form-control" value="{{ ui.login_button_text }}">
+                </div>
+                <div class="form-group">
+                    <label>Login Placeholder</label>
+                    <input type="text" name="login_placeholder" class="form-control" value="{{ ui.login_placeholder }}">
+                </div>
+                <div class="form-group">
+                    <label>Login Credit Text</label>
+                    <input type="text" name="login_credit_text" class="form-control" value="{{ ui.login_credit_text }}">
+                </div>
+                <div class="form-group">
+                    <label>Footer Credit Text</label>
+                    <input type="text" name="footer_text" class="form-control" value="{{ settings.footer_text }}">
+                </div>
+                <div class="form-group">
+                    <label>Key Gen Title</label>
+                    <input type="text" name="key_gen_title" class="form-control" value="{{ ui.key_gen_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Key Gen Name Placeholder</label>
+                    <input type="text" name="key_gen_name_placeholder" class="form-control" value="{{ ui.key_gen_name_placeholder }}">
+                </div>
+                <div class="form-group">
+                    <label>Key Gen Limit Placeholder</label>
+                    <input type="text" name="key_gen_limit_placeholder" class="form-control" value="{{ ui.key_gen_limit_placeholder }}">
+                </div>
+                <div class="form-group">
+                    <label>Key Gen Type Label</label>
+                    <input type="text" name="key_gen_type_label" class="form-control" value="{{ ui.key_gen_type_label }}">
+                </div>
+                <div class="form-group">
+                    <label>Key Gen Submit Text</label>
+                    <input type="text" name="key_gen_submit_text" class="form-control" value="{{ ui.key_gen_submit_text }}">
+                </div>
+                <div class="form-group">
+                    <label>Keys Table Title</label>
+                    <input type="text" name="keys_table_title" class="form-control" value="{{ ui.keys_table_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Settings Title</label>
+                    <input type="text" name="settings_title" class="form-control" value="{{ ui.settings_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Settings System Title</label>
+                    <input type="text" name="settings_system_title" class="form-control" value="{{ ui.settings_system_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Settings Analytics Title</label>
+                    <input type="text" name="settings_analytics_title" class="form-control" value="{{ ui.settings_analytics_title }}">
+                </div>
+                <div class="form-group">
+                    <label>Footer Credit</label>
+                    <input type="text" name="footer_credit" class="form-control" value="{{ ui.footer_credit }}">
+                </div>
+                <div class="form-group">
+                    <label>Toast Copied</label>
+                    <input type="text" name="toast_copied" class="form-control" value="{{ ui.toast_copied }}">
+                </div>
+                <div class="form-group">
+                    <label>Toast Error</label>
+                    <input type="text" name="toast_error" class="form-control" value="{{ ui.toast_error }}">
+                </div>
+                <div class="form-group">
+                    <label>Logo Icon (FontAwesome class)</label>
+                    <input type="text" name="logo_icon" class="form-control" value="{{ ui.logo_icon }}">
+                </div>
+                <div class="form-group">
+                    <label>Logo Text</label>
+                    <input type="text" name="logo_text" class="form-control" value="{{ ui.logo_text }}">
+                </div>
+                <!-- Checkboxes -->
+                <div class="form-group inline-check" style="grid-column:1/-1; display:flex; gap:20px; flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" name="glitch_effect" {% if ui.glitch_effect %}checked{% endif %}> Glitch Effect
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" name="matrix_rain" {% if ui.matrix_rain %}checked{% endif %}> Matrix Rain
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" name="typing_animation" {% if ui.typing_animation %}checked{% endif %}> Typing Animation
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" name="hacker_style" {% if ui.hacker_style %}checked{% endif %}> Hacker Style
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-block mt-20"><i class="fas fa-save"></i> Apply All Customizations</button>
         </form>
         <div class="mt-20 text-center">
             <a href="/dashboard" class="btn" style="border-color:{{ settings.secondary_color }};color:{{ settings.secondary_color }};"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
@@ -1052,7 +1218,7 @@ ADV_UI_HTML = """
 </html>
 """
 
-# ===== API MANAGEMENT PAGE HTML (Fully Responsive) =====
+# ===== API MANAGEMENT PAGE =====
 API_MGMT_HTML = """
 <!DOCTYPE html>
 <html>
@@ -1194,6 +1360,7 @@ def home():
 def login():
     ui = get_ui_settings()
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    adv = get_adv_ui_settings()
     rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
     if request.method == 'POST':
         password = request.form.get('password')
@@ -1203,7 +1370,7 @@ def login():
             return redirect('/dashboard')
         else:
             flash('Invalid password! Please try again.', 'danger')
-    return render_template_string(LOGIN_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary, version=VERSION)
+    return render_template_string(LOGIN_HTML, ui=ui, settings=settings, adv=adv, rgb_primary=rgb_primary, version=VERSION)
 
 @app.route('/dashboard')
 @admin_required
@@ -1212,6 +1379,7 @@ def dashboard():
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     custom_apis = get_custom_apis()
     ui = get_ui_settings()
+    adv = get_adv_ui_settings()
     rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
     for key, value in DEFAULT_SETTINGS.items():
         if key not in settings:
@@ -1221,6 +1389,7 @@ def dashboard():
         logged_in=True,
         keys=get_keys(),
         settings=settings,
+        adv=adv,
         rgb_primary=rgb_primary,
         host_url=request.url_root,
         analytics=analytics,
@@ -1242,10 +1411,46 @@ def api_management():
 @admin_required
 def advanced_ui():
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    ui = get_ui_settings()
     adv = get_adv_ui_settings()
     rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
     if request.method == 'POST':
+        # Update settings (colors, texts, etc.)
+        settings['primary_color'] = request.form.get('primary_color', '#00ff41')
+        settings['secondary_color'] = request.form.get('secondary_color', '#00aa33')
+        settings['bg_color'] = request.form.get('bg_color', '#0a0a0a')
+        settings['accent_color'] = request.form.get('accent_color', '#ff00ff')
+        settings['footer_text'] = request.form.get('footer_text', 'Developed by @Xenon33cyber')
+        
+        ui['header_title'] = request.form.get('header_title', 'Xenon API Management System')
+        ui['header_subtitle'] = request.form.get('header_subtitle', 'Premium API Management Platform')
+        ui['login_title'] = request.form.get('login_title', '⚡ XENON API MANAGEMENT')
+        ui['login_subtitle'] = request.form.get('login_subtitle', 'Secure & Encrypted Access')
+        ui['login_button_text'] = request.form.get('login_button_text', 'Access Core')
+        ui['login_placeholder'] = request.form.get('login_placeholder', '> Enter Master Password_')
+        ui['login_credit_text'] = request.form.get('login_credit_text', '🔐 Secured by @Xenon33cyber')
+        ui['key_gen_title'] = request.form.get('key_gen_title', 'Generate New API Key')
+        ui['key_gen_name_placeholder'] = request.form.get('key_gen_name_placeholder', 'e.g., premium_user')
+        ui['key_gen_limit_placeholder'] = request.form.get('key_gen_limit_placeholder', '0 = Unlimited')
+        ui['key_gen_type_label'] = request.form.get('key_gen_type_label', 'API Type')
+        ui['key_gen_submit_text'] = request.form.get('key_gen_submit_text', 'Create API Key')
+        ui['keys_table_title'] = request.form.get('keys_table_title', 'Active API Keys')
+        ui['settings_title'] = request.form.get('settings_title', 'Advanced Settings')
+        ui['settings_system_title'] = request.form.get('settings_system_title', 'System Configuration')
+        ui['settings_analytics_title'] = request.form.get('settings_analytics_title', 'Analytics & Logs')
+        ui['footer_credit'] = request.form.get('footer_credit', 'Powered by @Xenon33cyber')
+        ui['toast_copied'] = request.form.get('toast_copied', 'URL copied to clipboard! ✅')
+        ui['toast_error'] = request.form.get('toast_error', 'Failed to copy. Please select and copy manually.')
+        ui['logo_icon'] = request.form.get('logo_icon', 'fa-skull')
+        ui['logo_text'] = request.form.get('logo_text', 'XENON')
+        ui['glitch_effect'] = 'glitch_effect' in request.form
+        ui['matrix_rain'] = 'matrix_rain' in request.form
+        ui['typing_animation'] = 'typing_animation' in request.form
+        ui['hacker_style'] = 'hacker_style' in request.form
+        
         adv['font_family'] = request.form.get('font_family', DEFAULT_ADV_UI['font_family'])
+        adv['font_size_base'] = request.form.get('font_size_base', DEFAULT_ADV_UI['font_size_base'])
+        adv['heading_font_size'] = request.form.get('heading_font_size', DEFAULT_ADV_UI['heading_font_size'])
         adv['border_radius'] = request.form.get('border_radius', DEFAULT_ADV_UI['border_radius'])
         adv['glass_opacity'] = float(request.form.get('glass_opacity', DEFAULT_ADV_UI['glass_opacity']))
         adv['blur_amount'] = request.form.get('blur_amount', DEFAULT_ADV_UI['blur_amount'])
@@ -1253,10 +1458,16 @@ def advanced_ui():
         adv['glow_intensity'] = float(request.form.get('glow_intensity', DEFAULT_ADV_UI['glow_intensity']))
         adv['card_spacing'] = request.form.get('card_spacing', DEFAULT_ADV_UI['card_spacing'])
         adv['show_scanlines'] = 'show_scanlines' in request.form
+        adv['status_online_text'] = request.form.get('status_online_text', 'Online')
+        adv['status_offline_text'] = request.form.get('status_offline_text', 'Offline')
+        adv['custom_css'] = request.form.get('custom_css', '')
+        
+        save_data(SETTINGS_FILE, settings)
+        save_ui_settings(ui)
         save_adv_ui_settings(adv)
-        flash('Advanced UI settings updated!', 'success')
+        flash('All UI customizations applied!', 'success')
         return redirect('/advanced_ui')
-    return render_template_string(ADV_UI_HTML, settings=settings, adv=adv, rgb_primary=rgb_primary)
+    return render_template_string(ADV_UI_HTML, settings=settings, ui=ui, adv=adv, rgb_primary=rgb_primary)
 
 @app.route('/update_custom_api', methods=['POST'])
 @admin_required
@@ -1321,6 +1532,7 @@ def logout():
 def change_password():
     ui = get_ui_settings()
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    adv = get_adv_ui_settings()
     rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
     if request.method == 'POST':
         current = request.form.get('current_password')
@@ -1338,7 +1550,7 @@ def change_password():
         set_admin_password(new)
         flash('Password changed successfully!', 'success')
         return redirect('/dashboard')
-    return render_template_string(CHANGE_PASSWORD_HTML, ui=ui, settings=settings, rgb_primary=rgb_primary)
+    return render_template_string(CHANGE_PASSWORD_HTML, ui=ui, settings=settings, adv=adv, rgb_primary=rgb_primary)
 
 @app.route('/generate', methods=['POST'])
 @admin_required
@@ -1580,7 +1792,7 @@ if __name__ == "__main__":
     print("🛡️ Rate Limiting: Active")
     print("⚡ Cache: Enabled")
     print("🔧 Custom APIs: Admin Can Add")
-    print("🎨 UI Customization: Separate Page (Advanced UI)")
+    print("🎨 UI Customization: Full Mastery (Every Text & Style)")
     print("🛠️ API Management: Separate Page (Per‑API Controls)")
     print("📱 Fully Responsive for Laptop & Phone")
     print(f"💀 Owner: @Xenon33cyber")
@@ -1590,7 +1802,7 @@ if __name__ == "__main__":
     print(f"  🔑 Login: http://localhost:{port}/login")
     print(f"  📡 API: http://localhost:{port}/api/v1/info?key=admin&query=test")
     print(f"  ❤️ Health: http://localhost:{port}/api/health")
-    print(f"  🎨 Advanced UI: http://localhost:{port}/advanced_ui")
+    print(f"  🎨 Master UI: http://localhost:{port}/advanced_ui")
     print(f"  ⚙️ API Management: http://localhost:{port}/api_management")
     print("=" * 70)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
