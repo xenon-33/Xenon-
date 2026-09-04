@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Xenon API Management System v3.0.0
+Xenon API Management System v3.2.0 (Enhanced with API & UI Management)
 Owner: @Xenon33cyber
 Developer: @Xenon33cyber
 Deploy: Localhost / Render / Vercel
@@ -39,9 +39,10 @@ BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist.json")
 RATE_LIMIT_FILE = os.path.join(BASE_DIR, "rate_limits.json")
 CUSTOM_APIS_FILE = os.path.join(BASE_DIR, "custom_apis.json")
 UI_SETTINGS_FILE = os.path.join(BASE_DIR, "ui_settings.json")
+ADV_UI_FILE = os.path.join(BASE_DIR, "adv_ui_settings.json")   # New for advanced UI
 
 SECRET_KEY = secrets.token_hex(32)
-VERSION = "3.0.0"
+VERSION = "3.2.0"
 MAX_KEYS_PER_USER = 100
 API_NAME = "Xenon API Management System"
 
@@ -102,6 +103,17 @@ DEFAULT_UI = {
     "matrix_rain": True,
     "typing_animation": True,
     "hacker_style": True
+}
+
+DEFAULT_ADV_UI = {
+    "font_family": "'Courier New', monospace",
+    "border_radius": "16px",
+    "glass_opacity": "0.95",
+    "blur_amount": "20px",
+    "animation_speed": "1",
+    "show_scanlines": True,
+    "glow_intensity": "0.05",
+    "card_spacing": "15px"
 }
 
 app.secret_key = SECRET_KEY
@@ -195,11 +207,27 @@ def get_blacklist():
     return load_data(BLACKLIST_FILE, {"ips": [], "keys": []})
 
 def get_custom_apis():
-    return load_data(CUSTOM_APIS_FILE, {})
+    """Returns dict with api_name -> {url, active, maintenance, response_override}"""
+    data = load_data(CUSTOM_APIS_FILE, {})
+    for name, cfg in data.items():
+        if not isinstance(cfg, dict):
+            data[name] = {"url": str(cfg), "active": True, "maintenance": False, "response_override": {}}
+        else:
+            cfg.setdefault("active", True)
+            cfg.setdefault("maintenance", False)
+            cfg.setdefault("response_override", {})
+            cfg.setdefault("url", "")
+    save_data(CUSTOM_APIS_FILE, data)
+    return data
 
-def save_custom_api(api_name, api_url):
+def save_custom_api(api_name, api_url, active=True, maintenance=False, response_override=None):
     custom_apis = get_custom_apis()
-    custom_apis[api_name] = api_url
+    custom_apis[api_name] = {
+        "url": api_url,
+        "active": active,
+        "maintenance": maintenance,
+        "response_override": response_override or {}
+    }
     save_data(CUSTOM_APIS_FILE, custom_apis)
 
 def delete_custom_api(api_name):
@@ -219,6 +247,16 @@ def get_ui_settings():
 
 def save_ui_settings(ui_data):
     save_data(UI_SETTINGS_FILE, ui_data)
+
+def get_adv_ui_settings():
+    adv = load_data(ADV_UI_FILE, DEFAULT_ADV_UI)
+    for key, value in DEFAULT_ADV_UI.items():
+        if key not in adv:
+            adv[key] = value
+    return adv
+
+def save_adv_ui_settings(adv_data):
+    save_data(ADV_UI_FILE, adv_data)
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
@@ -249,7 +287,7 @@ def rate_limit_check(ip):
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     return rate_limits[ip]["count"] <= settings.get("rate_limit_per_minute", 60)
 
-# ===== LOGIN HTML (Forgot Access Removed) =====
+# ===== LOGIN HTML (unchanged) =====
 LOGIN_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -439,7 +477,7 @@ LOGIN_HTML = """
 </html>
 """
 
-# ===== DASHBOARD HTML =====
+# ===== DASHBOARD HTML (with API Management & Advanced UI buttons) =====
 DASHBOARD_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -505,6 +543,8 @@ DASHBOARD_HTML = """
         .badge-active { background:rgba({{ rgb_primary }},0.12); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.2); }
         .badge-expired { background:rgba(255,0,0,0.08); color:#ff4444; border-color:rgba(255,0,0,0.15); }
         .badge-custom { background:rgba({{ rgb_primary }},0.06); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.1); }
+        .badge-maintenance { background:rgba(255,165,0,0.08); color:#ffa500; border-color:rgba(255,165,0,0.15); }
+        .badge-inactive { background:rgba(128,128,128,0.08); color:#888; border-color:rgba(128,128,128,0.15); }
         .copy-btn { background:rgba({{ rgb_primary }},0.04); color:{{ settings.primary_color }}; border:1px solid rgba({{ rgb_primary }},0.1); padding:4px 12px; border-radius:4px; cursor:pointer; font-size:11px; transition:all 0.3s ease; font-family:'Courier New',monospace; }
         .copy-btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 20px rgba({{ rgb_primary }},0.1); }
         .copy-btn.copied { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
@@ -544,16 +584,24 @@ DASHBOARD_HTML = """
         .footer-text .highlight { color:{{ settings.primary_color }}; }
         .scanline { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba({{ rgb_primary }},0.01) 2px, rgba({{ rgb_primary }},0.01) 4px); z-index:9999; }
         .ui-editor-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+        .api-mgmt-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
         @media (max-width:768px) {
             .key-gen-grid { grid-template-columns:1fr; }
             .key-gen-grid .full-width { grid-column:1; }
             .settings-grid { grid-template-columns:1fr; }
             .ui-editor-grid { grid-template-columns:1fr; }
+            .api-mgmt-grid { grid-template-columns:1fr; }
             .stats-grid { grid-template-columns:repeat(2,1fr); }
             .header { flex-direction:column; align-items:stretch; text-align:center; }
             .header-actions { justify-content:center; }
             .logo { justify-content:center; }
         }
+        .api-mgmt-item { background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.06); border-radius:8px; padding:12px; margin-bottom:12px; }
+        .api-mgmt-item .api-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+        .api-mgmt-item .api-header .api-name { font-size:16px; font-weight:700; color:{{ settings.primary_color }}; }
+        .api-mgmt-item .api-toggles { display:flex; gap:15px; align-items:center; flex-wrap:wrap; }
+        .api-mgmt-item .api-toggles label { display:flex; align-items:center; gap:6px; font-size:12px; color:{{ settings.secondary_color }}; cursor:pointer; }
+        .api-mgmt-item textarea { width:100%; background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.08); border-radius:4px; color:{{ settings.primary_color }}; font-family:'Courier New',monospace; font-size:12px; padding:6px; }
     </style>
 </head>
 <body>
@@ -569,6 +617,8 @@ DASHBOARD_HTML = """
         </div>
         <div class="header-actions">
             <span class="status-badge status-online"><i class="fas fa-circle" style="font-size:8px;"></i> Online</span>
+            <a href="/advanced_ui" class="btn btn-info btn-sm"><i class="fas fa-palette"></i> Advanced UI</a>
+            <a href="#api-mgmt" class="btn btn-warning btn-sm"><i class="fas fa-plug"></i> Manage APIs</a>
             <button class="btn btn-outline btn-sm" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh</button>
             <a href="/change_password" class="btn btn-warning btn-sm"><i class="fas fa-key"></i> Change Password</a>
             <a href="/logout" class="btn btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -673,6 +723,75 @@ DASHBOARD_HTML = """
             <button type="submit" class="btn btn-success btn-block mt-20"><i class="fas fa-save"></i> Apply UI Customizations</button>
         </form>
     </div>
+    <!-- ===== API MANAGEMENT SECTION ===== -->
+    <div id="api-mgmt" class="glass mb-20">
+        <h3 class="section-title"><i class="fas fa-plug"></i> API Management <span style="font-size:12px;color:{{ settings.secondary_color }};">(Per‑API Controls)</span></h3>
+        {% if custom_apis %}
+            {% for api_name, api_cfg in custom_apis.items() %}
+            <div class="api-mgmt-item">
+                <div class="api-header">
+                    <span class="api-name">{{ api_name|upper }}</span>
+                    <span>
+                        {% if api_cfg.active %}
+                            {% if api_cfg.maintenance %}
+                                <span class="badge badge-maintenance"><i class="fas fa-tools"></i> Maintenance</span>
+                            {% else %}
+                                <span class="badge badge-active"><i class="fas fa-check-circle"></i> Active</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-inactive"><i class="fas fa-times-circle"></i> Inactive</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <form method="POST" action="/update_custom_api" style="display:flex;flex-direction:column;gap:8px;">
+                    <input type="hidden" name="api_name" value="{{ api_name }}">
+                    <div class="api-toggles">
+                        <label>
+                            <input type="checkbox" name="active" {% if api_cfg.active %}checked{% endif %}> Active
+                        </label>
+                        <label>
+                            <input type="checkbox" name="maintenance" {% if api_cfg.maintenance %}checked{% endif %}> Maintenance
+                        </label>
+                        <label style="flex:1;min-width:200px;">
+                            URL: <input type="url" name="api_url" value="{{ api_cfg.url }}" style="background:rgba({{ rgb_primary }},0.02);border:1px solid rgba({{ rgb_primary }},0.08);border-radius:4px;color:{{ settings.primary_color }};padding:4px 8px;font-family:'Courier New',monospace;width:100%;">
+                        </label>
+                    </div>
+                    <div>
+                        <label style="font-size:11px;color:{{ settings.secondary_color }};">Response Override (JSON) – will be merged into original response:</label>
+                        <textarea name="response_override" rows="2" style="width:100%;background:rgba({{ rgb_primary }},0.02);border:1px solid rgba({{ rgb_primary }},0.08);border-radius:4px;color:{{ settings.primary_color }};font-family:'Courier New',monospace;font-size:12px;padding:6px;">{{ api_cfg.response_override|tojson }}</textarea>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:4px;">
+                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-save"></i> Update</button>
+                        <form method="POST" action="/delete_custom_api" style="display:inline;">
+                            <input type="hidden" name="api_name" value="{{ api_name }}">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this custom API?')"><i class="fas fa-trash"></i> Delete</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align:center;color:{{ settings.secondary_color }};padding:20px 0;">
+                <i class="fas fa-info-circle"></i> No custom APIs added yet. Add one below.
+            </div>
+        {% endif %}
+        <hr style="border-color:rgba({{ rgb_primary }},0.1);margin:15px 0;">
+        <h4 style="color:{{ settings.secondary_color }};font-size:13px;"><i class="fas fa-plus-circle"></i> Add New Custom API</h4>
+        <form method="POST" action="/add_custom_api">
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;">
+                <div class="form-group" style="margin:0;">
+                    <label>API Name</label>
+                    <input type="text" name="api_name" class="form-control" placeholder="e.g., number, telegram" required>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>API URL (with query placeholder)</label>
+                    <input type="url" name="api_url" class="form-control" placeholder="https://api.example.com?query=" required>
+                </div>
+                <button type="submit" class="btn btn-info" style="height:44px;"><i class="fas fa-plus"></i> Add</button>
+            </div>
+        </form>
+    </div>
+    <!-- ===== KEY GENERATION ===== -->
     <div class="glass mb-20">
         <h3 class="section-title"><i class="fas fa-plus-circle"></i> {{ ui.key_gen_title }}</h3>
         <form method="POST" action="/generate">
@@ -713,47 +832,7 @@ DASHBOARD_HTML = """
             <span class="credit-text">{{ settings.credit_text }}</span>
         </div>
     </div>
-    <div class="glass mb-20">
-        <h3 class="section-title"><i class="fas fa-plug"></i> {{ ui.custom_api_title }}</h3>
-        <form method="POST" action="/add_custom_api">
-            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;">
-                <div class="form-group">
-                    <label>API Name</label>
-                    <input type="text" name="api_name" class="form-control" placeholder="{{ ui.custom_api_name_placeholder }}" required>
-                </div>
-                <div class="form-group">
-                    <label>API URL (with query placeholder)</label>
-                    <input type="url" name="api_url" class="form-control" placeholder="{{ ui.custom_api_url_placeholder }}" required>
-                </div>
-                <button type="submit" class="btn btn-info" style="height:44px;">
-                    <i class="fas fa-plus"></i> {{ ui.custom_api_add_text }}
-                </button>
-            </div>
-        </form>
-        {% if custom_apis %}
-            <div style="margin-top:15px;">
-                <h4 style="color:{{ settings.secondary_color }};font-size:13px;margin-bottom:10px;"><i class="fas fa-list"></i> Your Custom APIs</h4>
-                {% for api_name, api_url in custom_apis.items() %}
-                    <div class="custom-api-item">
-                        <span class="api-name">{{ api_name|upper }}</span>
-                        <span class="api-url">{{ api_url }}</span>
-                        <div class="api-actions">
-                            <form method="POST" action="/delete_custom_api" style="display:inline;">
-                                <input type="hidden" name="api_name" value="{{ api_name }}">
-                                <button type="submit" class="delete-api-btn" onclick="return confirm('Delete this custom API?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div style="margin-top:15px;text-align:center;color:{{ settings.secondary_color }};font-size:13px;padding:20px 0;">
-                <i class="fas fa-info-circle"></i> No custom APIs added yet.
-            </div>
-        {% endif %}
-    </div>
+    <!-- ===== KEYS TABLE ===== -->
     <div class="glass">
         <div class="flex-between mb-20">
             <h3 style="color:{{ settings.primary_color }};font-size:18px;text-shadow:0 0 30px rgba({{ rgb_primary }},0.05);">
@@ -822,7 +901,7 @@ DASHBOARD_HTML = """
                 <form method="POST" action="/update_config">
                     <div class="form-group">
                         <div class="flex flex-between">
-                            <label>Maintenance Mode</label>
+                            <label>Maintenance Mode (Global)</label>
                             <label class="toggle">
                                 <input type="checkbox" name="maintenance_mode" {% if settings.maintenance_mode %}checked{% endif %}>
                                 <span class="slider"></span>
@@ -961,7 +1040,7 @@ DASHBOARD_HTML = """
 </html>
 """
 
-# ===== CHANGE PASSWORD HTML =====
+# ===== CHANGE PASSWORD HTML (unchanged) =====
 CHANGE_PASSWORD_HTML = """
 <!DOCTYPE html>
 <html>
@@ -1025,6 +1104,85 @@ CHANGE_PASSWORD_HTML = """
 </html>
 """
 
+# ===== ADVANCED UI PAGE HTML =====
+ADV_UI_HTML = """
+<!DOCTYPE html>
+<html>
+<head><title>Advanced UI Customization</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Courier New',monospace; background:{{ settings.bg_color }}; color:{{ settings.primary_color }}; min-height:100vh; padding:20px; }
+    .container { max-width:800px; margin:0 auto; }
+    .glass { background:rgba(10,10,10,0.95); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:16px; padding:30px; margin-bottom:20px; }
+    h1 { text-align:center; color:{{ settings.primary_color }}; text-shadow:0 0 30px rgba({{ rgb_primary }},0.05); margin-bottom:20px; }
+    .form-group { margin-bottom:15px; }
+    .form-group label { display:block; margin-bottom:6px; font-size:12px; text-transform:uppercase; color:{{ settings.secondary_color }}; }
+    .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.1); border-radius:8px; color:{{ settings.primary_color }}; font-size:14px; font-family:'Courier New',monospace; }
+    .form-control:focus { outline:none; border-color:{{ settings.primary_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.06); }
+    .btn { padding:10px 20px; border:1px solid {{ settings.primary_color }}; border-radius:8px; background:transparent; color:{{ settings.primary_color }}; cursor:pointer; font-family:'Courier New',monospace; font-weight:600; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
+    .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.1); }
+    .btn-success { border-color:{{ settings.primary_color }}; color:{{ settings.primary_color }}; }
+    .btn-success:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
+    .btn-block { width:100%; justify-content:center; }
+    .mt-20 { margin-top:20px; }
+    .flex { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+    @media (max-width:600px){ .grid-2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="glass">
+        <h1><i class="fas fa-palette"></i> Advanced UI Customization</h1>
+        <p style="color:{{ settings.secondary_color }};font-size:13px;text-align:center;margin-bottom:20px;">Fine‑tune every visual aspect of your dashboard and login page.</p>
+        <form method="POST" action="/update_adv_ui">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Font Family</label>
+                    <input type="text" name="font_family" class="form-control" value="{{ adv.font_family }}" placeholder="'Courier New', monospace">
+                </div>
+                <div class="form-group">
+                    <label>Border Radius (e.g., 16px)</label>
+                    <input type="text" name="border_radius" class="form-control" value="{{ adv.border_radius }}" placeholder="16px">
+                </div>
+                <div class="form-group">
+                    <label>Glass Opacity (0–1)</label>
+                    <input type="number" step="0.01" min="0" max="1" name="glass_opacity" class="form-control" value="{{ adv.glass_opacity }}" placeholder="0.95">
+                </div>
+                <div class="form-group">
+                    <label>Blur Amount (e.g., 20px)</label>
+                    <input type="text" name="blur_amount" class="form-control" value="{{ adv.blur_amount }}" placeholder="20px">
+                </div>
+                <div class="form-group">
+                    <label>Animation Speed (multiplier)</label>
+                    <input type="number" step="0.1" min="0.1" name="animation_speed" class="form-control" value="{{ adv.animation_speed }}" placeholder="1">
+                </div>
+                <div class="form-group">
+                    <label>Glow Intensity (0–1)</label>
+                    <input type="number" step="0.01" min="0" max="1" name="glow_intensity" class="form-control" value="{{ adv.glow_intensity }}" placeholder="0.05">
+                </div>
+                <div class="form-group">
+                    <label>Card Spacing (px)</label>
+                    <input type="text" name="card_spacing" class="form-control" value="{{ adv.card_spacing }}" placeholder="15px">
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:20px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" name="show_scanlines" {% if adv.show_scanlines %}checked{% endif %}> Show Scanlines
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-block mt-20"><i class="fas fa-save"></i> Apply Advanced UI</button>
+        </form>
+        <div class="mt-20 text-center">
+            <a href="/dashboard" class="btn" style="border-color:{{ settings.secondary_color }};color:{{ settings.secondary_color }};"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+"""
+
 # ==========================================
 # ROUTES
 # ==========================================
@@ -1074,6 +1232,79 @@ def dashboard():
         custom_apis=custom_apis,
         ui=ui
     )
+
+@app.route('/advanced_ui', methods=['GET', 'POST'])
+@admin_required
+def advanced_ui():
+    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    adv = get_adv_ui_settings()
+    rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
+    if request.method == 'POST':
+        adv['font_family'] = request.form.get('font_family', DEFAULT_ADV_UI['font_family'])
+        adv['border_radius'] = request.form.get('border_radius', DEFAULT_ADV_UI['border_radius'])
+        adv['glass_opacity'] = float(request.form.get('glass_opacity', DEFAULT_ADV_UI['glass_opacity']))
+        adv['blur_amount'] = request.form.get('blur_amount', DEFAULT_ADV_UI['blur_amount'])
+        adv['animation_speed'] = float(request.form.get('animation_speed', DEFAULT_ADV_UI['animation_speed']))
+        adv['glow_intensity'] = float(request.form.get('glow_intensity', DEFAULT_ADV_UI['glow_intensity']))
+        adv['card_spacing'] = request.form.get('card_spacing', DEFAULT_ADV_UI['card_spacing'])
+        adv['show_scanlines'] = 'show_scanlines' in request.form
+        save_adv_ui_settings(adv)
+        flash('Advanced UI settings updated!', 'success')
+        return redirect('/advanced_ui')
+    return render_template_string(ADV_UI_HTML, settings=settings, adv=adv, rgb_primary=rgb_primary)
+
+@app.route('/update_custom_api', methods=['POST'])
+@admin_required
+def update_custom_api():
+    api_name = request.form.get('api_name')
+    api_url = request.form.get('api_url', '').strip()
+    active = 'active' in request.form
+    maintenance = 'maintenance' in request.form
+    response_override_raw = request.form.get('response_override', '{}').strip()
+    try:
+        response_override = json.loads(response_override_raw) if response_override_raw else {}
+    except json.JSONDecodeError:
+        flash('Invalid JSON in Response Override!', 'danger')
+        return redirect('/dashboard')
+    
+    custom_apis = get_custom_apis()
+    if api_name in custom_apis:
+        custom_apis[api_name] = {
+            "url": api_url,
+            "active": active,
+            "maintenance": maintenance,
+            "response_override": response_override
+        }
+        save_data(CUSTOM_APIS_FILE, custom_apis)
+        # Clear cache for this API
+        global cache_store
+        cache_store = {k: v for k, v in cache_store.items() if not k.startswith(f"{api_name}:")}
+        flash(f'Custom API "{api_name}" updated!', 'success')
+    else:
+        flash('API not found!', 'danger')
+    return redirect('/dashboard')
+
+@app.route('/add_custom_api', methods=['POST'])
+@admin_required
+def add_custom_api():
+    api_name = request.form.get('api_name', '').strip().lower()
+    api_url = request.form.get('api_url', '').strip()
+    if not api_name or not api_url:
+        flash('Please provide both API name and URL!', 'danger')
+        return redirect('/dashboard')
+    api_name = re.sub(r'[^a-zA-Z0-9_]', '', api_name)
+    # Save with defaults: active=True, maintenance=False, override={}
+    save_custom_api(api_name, api_url, active=True, maintenance=False, response_override={})
+    flash(f'Custom API "{api_name}" added successfully!', 'success')
+    return redirect('/dashboard')
+
+@app.route('/delete_custom_api', methods=['POST'])
+@admin_required
+def delete_custom_api_route():
+    api_name = request.form.get('api_name')
+    if api_name and delete_custom_api(api_name):
+        flash(f'Custom API "{api_name}" deleted!', 'warning')
+    return redirect('/dashboard')
 
 @app.route('/logout')
 def logout():
@@ -1198,29 +1429,8 @@ def update_ui():
     flash('UI settings updated successfully!', 'success')
     return redirect('/dashboard')
 
-@app.route('/add_custom_api', methods=['POST'])
-@admin_required
-def add_custom_api():
-    api_name = request.form.get('api_name', '').strip().lower()
-    api_url = request.form.get('api_url', '').strip()
-    if not api_name or not api_url:
-        flash('Please provide both API name and URL!', 'danger')
-        return redirect('/dashboard')
-    api_name = re.sub(r'[^a-zA-Z0-9_]', '', api_name)
-    save_custom_api(api_name, api_url)
-    flash(f'Custom API "{api_name}" added successfully!', 'success')
-    return redirect('/dashboard')
-
-@app.route('/delete_custom_api', methods=['POST'])
-@admin_required
-def delete_custom_api_route():
-    api_name = request.form.get('api_name')
-    if api_name and delete_custom_api(api_name):
-        flash(f'Custom API "{api_name}" deleted!', 'warning')
-    return redirect('/dashboard')
-
 # ==========================================
-# API ENDPOINT
+# API ENDPOINT (with per‑API checks)
 # ==========================================
 
 cache_store = {}
@@ -1228,8 +1438,10 @@ cache_store = {}
 @app.route('/api/v1/info', methods=['GET', 'POST'])
 def api_endpoint():
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    # Global maintenance check
     if settings.get('maintenance_mode', False):
         return jsonify({"error": "API is under maintenance. Please try again later."}), 503
+    
     client_ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
     if settings.get('blacklist_enabled', True):
         blacklist = get_blacklist()
@@ -1237,10 +1449,12 @@ def api_endpoint():
             return jsonify({"error": "Your IP has been blocked due to suspicious activity."}), 403
     if not rate_limit_check(client_ip):
         return jsonify({"error": "Rate limit exceeded. Please wait a moment."}), 429
+    
     api_key = request.args.get('key')
     query = request.args.get('query')
     if not api_key or not query:
         return jsonify({"error": "Missing parameters! Usage: /api/v1/info?key=YOUR_KEY&query=TARGET_DATA"}), 400
+    
     keys = get_keys()
     custom_apis = get_custom_apis()
     if api_key not in keys:
@@ -1250,28 +1464,51 @@ def api_endpoint():
         blacklist = get_blacklist()
         if api_key in blacklist.get('keys', []):
             return jsonify({"error": "API Key has been revoked."}), 403
+    
     key_info = keys[api_key]
     if date.today() > datetime.strptime(key_info.get('expiry_date', '2099-12-31'), '%Y-%m-%d').date():
         log_error("EXPIRED_KEY", f"Expired key used: {api_key}", api_key, query)
         return jsonify({"error": "API Key Expired! Contact Admin."}), 403
     if key_info['limit'] != 0 and key_info['used'] >= key_info['limit']:
         return jsonify({"error": "Daily Limit Reached!"}), 429
+    
     api_type = key_info['api_type']
-    if api_type in custom_apis:
-        base_url = custom_apis[api_type]
-    else:
+    if api_type not in custom_apis:
         return jsonify({"error": f"API endpoint '{api_type}' is not configured."}), 500
+    
+    api_config = custom_apis[api_type]
+    # Per‑API active check
+    if not api_config.get('active', True):
+        return jsonify({"error": f"API '{api_type}' is currently inactive."}), 403
+    # Per‑API maintenance check
+    if api_config.get('maintenance', False):
+        return jsonify({"error": f"API '{api_type}' is under maintenance."}), 503
+    
+    base_url = api_config.get('url', '')
+    if not base_url:
+        return jsonify({"error": f"API '{api_type}' has no URL configured."}), 500
+    
+    # Handle self‑reference: just log warning, don't block
     if request.host in base_url:
-        log_error("CONFIG_ERROR", "Self-referencing API configuration", api_key, query)
-        return jsonify({"error": "CRITICAL CONFIG ERROR: You pasted your OWN API link in the settings!"}), 500
-    url = base_url + query
+        log_error("CONFIG_WARNING", "Self‑referencing API URL used", api_key, query)
+    
+    # Replace {query} placeholder if present, else append
+    if '{query}' in base_url:
+        url = base_url.replace('{query}', query)
+    else:
+        url = base_url + query
+    
     cache_key = f"{api_key}:{query}"
     if settings.get('cache_enabled', True) and cache_key in cache_store:
         cache_data, cache_time = cache_store[cache_key]
         if time.time() - cache_time < settings.get('cache_duration', 300):
             keys[api_key]['used'] += 1
             save_data(KEYS_FILE, keys)
+            # Merge response override
+            if api_config.get('response_override'):
+                cache_data.update(api_config['response_override'])
             return jsonify(cache_data)
+    
     try:
         resp = requests.get(url, timeout=15, headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -1279,9 +1516,11 @@ def api_endpoint():
         if 'text/html' in resp.headers.get('Content-Type', ''):
             log_error("HTML_RESPONSE", "Backend returned HTML", api_key, query)
             return jsonify({"error": "Backend Source API is returning HTML instead of JSON."}), 502
+        
         if resp.status_code == 200:
             try:
                 data = resp.json()
+                # Remove sensitive fields
                 for f in ['credit', 'developer', 'owner', 'powered_by', 'api_by', 'BUY_API', 'SUPPORT', 'author', 'created_by']:
                     data.pop(f, None)
                 if settings.get('enable_credit', True):
@@ -1291,6 +1530,11 @@ def api_endpoint():
                 data['api_version'] = VERSION
                 data['server_time'] = datetime.now().isoformat()
                 data['api_name'] = settings.get('system_name', API_NAME)
+                
+                # Merge response override
+                if api_config.get('response_override'):
+                    data.update(api_config['response_override'])
+                
                 if settings.get('cache_enabled', True):
                     cache_store[cache_key] = (data.copy(), time.time())
                 keys[api_key]['used'] += 1
@@ -1365,6 +1609,7 @@ if __name__ == "__main__":
     print("⚡ Cache: Enabled")
     print("🔧 Custom APIs: Admin Can Add")
     print("🎨 UI Customization: Fully Configurable")
+    print("🛠️ Per‑API Management: Active/Inactive/Maintenance/Override")
     print(f"💀 Owner: @Xenon33cyber")
     print("=" * 70)
     print("\n📌 Endpoints:")
@@ -1372,5 +1617,6 @@ if __name__ == "__main__":
     print(f"  🔑 Login: http://localhost:{port}/login")
     print(f"  📡 API: http://localhost:{port}/api/v1/info?key=admin&query=test")
     print(f"  ❤️ Health: http://localhost:{port}/api/health")
+    print(f"  🎨 Advanced UI: http://localhost:{port}/advanced_ui")
     print("=" * 70)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
