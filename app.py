@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Xenon API Management System v3.4.0 (Ultimate Customization)
+Xenon API Management System v3.4.1 (Fully Fixed & Responsive)
 Owner: @Xenon33cyber
 Developer: @Xenon33cyber
 Deploy: Localhost / Render / Vercel
@@ -42,10 +42,11 @@ UI_SETTINGS_FILE = os.path.join(BASE_DIR, "ui_settings.json")
 ADV_UI_FILE = os.path.join(BASE_DIR, "adv_ui_settings.json")
 
 SECRET_KEY = secrets.token_hex(32)
-VERSION = "3.4.0"
+VERSION = "3.4.1"
 MAX_KEYS_PER_USER = 100
 API_NAME = "Xenon API Management System"
 
+# ===== DEFAULTS =====
 DEFAULT_SETTINGS = {
     "maintenance_mode": False,
     "allow_public_access": True,
@@ -63,7 +64,7 @@ DEFAULT_SETTINGS = {
     "primary_color": "#00ff41",
     "secondary_color": "#00aa33",
     "bg_color": "#0a0a0a",
-    "accent_color": "#ff00ff"   # new
+    "accent_color": "#ff00ff"
 }
 
 DEFAULT_UI = {
@@ -113,15 +114,11 @@ DEFAULT_ADV_UI = {
     "border_radius": "16px",
     "glass_opacity": "0.95",
     "blur_amount": "20px",
-    "animation_speed": "1",
+    "animation_speed": "1.0",
     "show_scanlines": True,
     "glow_intensity": "0.05",
     "card_spacing": "15px",
     "custom_css": "",
-    "button_style": "default",  # default, round, square, neon
-    "table_style": "default",   # default, striped, bordered
-    "background_pattern": "none",  # none, dots, grid, circuit
-    "accent_color": "#ff00ff",
     "status_online_text": "Online",
     "status_offline_text": "Offline"
 }
@@ -296,7 +293,10 @@ def rate_limit_check(ip):
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     return rate_limits[ip]["count"] <= settings.get("rate_limit_per_minute", 60)
 
-# ===== LOGIN HTML =====
+# ==========================================
+# HTML TEMPLATES (All are fully responsive)
+# ==========================================
+
 LOGIN_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -364,7 +364,7 @@ LOGIN_HTML = """
             width: 200%;
             height: 200%;
             background: radial-gradient(circle at 50% 50%, rgba({{ rgb_primary }},0.03) 0%, transparent 70%);
-            animation: rotateGlow {{ 20|float / adv.animation_speed|float }}s linear infinite;
+            animation: rotateGlow {{ 20 / adv.animation_speed|float }}s linear infinite;
             pointer-events: none;
         }
         @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -487,7 +487,6 @@ LOGIN_HTML = """
 </html>
 """
 
-# ===== DASHBOARD HTML =====
 DASHBOARD_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -916,7 +915,6 @@ DASHBOARD_HTML = """
 </html>
 """
 
-# ===== CHANGE PASSWORD HTML =====
 CHANGE_PASSWORD_HTML = """
 <!DOCTYPE html>
 <html>
@@ -983,11 +981,10 @@ CHANGE_PASSWORD_HTML = """
 </html>
 """
 
-# ===== ADVANCED UI PAGE (FULL MASTERY) =====
 ADV_UI_HTML = """
 <!DOCTYPE html>
 <html>
-<head><title>Advanced UI Customization</title>
+<head><title>Master UI Customization</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
@@ -1010,9 +1007,8 @@ ADV_UI_HTML = """
     .btn-block { width:100%; justify-content:center; }
     .mt-20 { margin-top:20px; }
     .text-center { text-align:center; }
-    .flex { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .section-title { color:{{ settings.primary_color }}; margin:20px 0 10px 0; font-size:16px; border-bottom:1px solid rgba({{ rgb_primary }},0.1); padding-bottom:8px; }
-    .inline-check { display:flex; align-items:center; gap:8px; }
+    .inline-check { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     @media (max-width:768px) { .grid-2 { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -1020,10 +1016,10 @@ ADV_UI_HTML = """
 <div class="container">
     <div class="glass">
         <h1><i class="fas fa-palette"></i> Master UI Customization</h1>
-        <p style="color:{{ settings.secondary_color }};font-size:13px;text-align:center;margin-bottom:20px;">Change every single text, color, font, animation, and even inject custom CSS.</p>
+        <p style="color:{{ settings.secondary_color }};font-size:13px;text-align:center;margin-bottom:20px;">Change every single text, color, font, animation, and inject custom CSS.</p>
         <a href="/dashboard" class="btn" style="border-color:{{ settings.secondary_color }};color:{{ settings.secondary_color }};"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
         <hr style="border-color:rgba({{ rgb_primary }},0.1);margin:20px 0;">
-        <form method="POST" action="/update_adv_ui">
+        <form method="POST" action="/advanced_ui">
             <div class="grid-2">
                 <!-- Colors -->
                 <div class="form-group">
@@ -1218,7 +1214,6 @@ ADV_UI_HTML = """
 </html>
 """
 
-# ===== API MANAGEMENT PAGE =====
 API_MGMT_HTML = """
 <!DOCTYPE html>
 <html>
@@ -1415,7 +1410,7 @@ def advanced_ui():
     adv = get_adv_ui_settings()
     rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
     if request.method == 'POST':
-        # Update settings (colors, texts, etc.)
+        # Update settings (colors, texts)
         settings['primary_color'] = request.form.get('primary_color', '#00ff41')
         settings['secondary_color'] = request.form.get('secondary_color', '#00aa33')
         settings['bg_color'] = request.form.get('bg_color', '#0a0a0a')
