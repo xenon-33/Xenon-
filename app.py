@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Xenon API Management System v3.3.0 (UI & API Management Separated)
+Xenon API Management System v3.3.1 (Fully Responsive)
 Owner: @Xenon33cyber
 Developer: @Xenon33cyber
 Deploy: Localhost / Render / Vercel
@@ -42,7 +42,7 @@ UI_SETTINGS_FILE = os.path.join(BASE_DIR, "ui_settings.json")
 ADV_UI_FILE = os.path.join(BASE_DIR, "adv_ui_settings.json")
 
 SECRET_KEY = secrets.token_hex(32)
-VERSION = "3.3.0"
+VERSION = "3.3.1"
 MAX_KEYS_PER_USER = 100
 API_NAME = "Xenon API Management System"
 
@@ -287,13 +287,13 @@ def rate_limit_check(ip):
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
     return rate_limits[ip]["count"] <= settings.get("rate_limit_per_minute", 60)
 
-# ===== LOGIN HTML (unchanged) =====
+# ===== LOGIN HTML (Responsive) =====
 LOGIN_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>XENON • Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -377,7 +377,7 @@ LOGIN_HTML = """
         .alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; border: 1px solid transparent; letter-spacing: 0.5px; }
         .alert-danger { background: rgba(255,0,0,0.08); color: #ff4444; border-color: rgba(255,0,0,0.15); }
         .alert-success { background: rgba({{ rgb_primary }},0.08); color: {{ settings.primary_color }}; border-color: rgba({{ rgb_primary }},0.15); }
-        @media (max-width:480px) { .glass { padding:25px 20px; } .login-title { font-size:18px; } .logo-icon { font-size:40px; } }
+        @media (max-width:480px) { .glass { padding:25px 20px; } .login-title { font-size:18px; } .logo-icon { font-size:40px; } .btn { font-size:12px; } }
     </style>
 </head>
 <body>
@@ -477,13 +477,13 @@ LOGIN_HTML = """
 </html>
 """
 
-# ===== DASHBOARD HTML (UI Customization removed, added buttons) =====
+# ===== DASHBOARD HTML (Responsive) =====
 DASHBOARD_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>XENON • Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -583,6 +583,27 @@ DASHBOARD_HTML = """
             .header { flex-direction:column; align-items:stretch; text-align:center; }
             .header-actions { justify-content:center; }
             .logo { justify-content:center; }
+            .logo h1 { font-size:18px; }
+            .logo span { font-size:10px; }
+            .btn { font-size:11px; padding:6px 12px; }
+            .btn-sm { font-size:10px; padding:4px 8px; }
+            .stat-number { font-size:20px; }
+            .section-title { font-size:16px; }
+            .url-display { max-width:150px; font-size:9px; }
+            .glass { padding:12px; }
+        }
+        @media (max-width:480px) {
+            .container { padding:8px; }
+            .header { padding:10px; }
+            .stats-grid { grid-template-columns:1fr 1fr; gap:8px; }
+            .stat-card { padding:10px; }
+            .stat-number { font-size:18px; }
+            .btn { font-size:10px; padding:4px 8px; }
+            .btn-sm { font-size:9px; padding:3px 6px; }
+            .form-control { font-size:12px; padding:8px 10px; }
+            .logo i { font-size:24px; }
+            .logo h1 { font-size:16px; }
+            .url-display { max-width:120px; font-size:8px; }
         }
     </style>
 </head>
@@ -884,11 +905,12 @@ DASHBOARD_HTML = """
 </html>
 """
 
-# ===== CHANGE PASSWORD HTML (unchanged) =====
+# ===== CHANGE PASSWORD HTML (Responsive) =====
 CHANGE_PASSWORD_HTML = """
 <!DOCTYPE html>
 <html>
 <head><title>Change Password</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -910,6 +932,7 @@ CHANGE_PASSWORD_HTML = """
     .alert-danger { background:rgba(255,0,0,0.06); color:#ff4444; border-color:rgba(255,0,0,0.1); }
     .logo-icon { font-size:40px; color:{{ settings.primary_color }}; text-align:center; margin-bottom:20px; }
     h2 { text-align:center; color:{{ settings.primary_color }}; text-shadow:0 0 30px rgba({{ rgb_primary }},0.05); margin-bottom:20px; }
+    @media (max-width:480px) { .glass { padding:20px; } .form-control { font-size:12px; } .btn { font-size:12px; } }
 </style>
 </head>
 <body>
@@ -948,11 +971,12 @@ CHANGE_PASSWORD_HTML = """
 </html>
 """
 
-# ===== ADVANCED UI HTML (unchanged) =====
+# ===== ADVANCED UI HTML (Responsive) =====
 ADV_UI_HTML = """
 <!DOCTYPE html>
 <html>
 <head><title>Advanced UI Customization</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -973,6 +997,7 @@ ADV_UI_HTML = """
     .flex { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
     @media (max-width:600px){ .grid-2 { grid-template-columns:1fr; } }
+    @media (max-width:480px){ .glass { padding:20px; } .btn { font-size:12px; } }
 </style>
 </head>
 <body>
@@ -1027,11 +1052,12 @@ ADV_UI_HTML = """
 </html>
 """
 
-# ===== API MANAGEMENT PAGE HTML =====
+# ===== API MANAGEMENT PAGE HTML (Fully Responsive) =====
 API_MGMT_HTML = """
 <!DOCTYPE html>
 <html>
 <head><title>API Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -1067,7 +1093,8 @@ API_MGMT_HTML = """
     .flex { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .flex-between { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
     .add-api-grid { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; }
-    @media (max-width:768px) { .add-api-grid { grid-template-columns:1fr; } }
+    @media (max-width:768px) { .add-api-grid { grid-template-columns:1fr; } .api-header { flex-direction:column; align-items:stretch; } .api-toggles { flex-direction:column; align-items:stretch; } .api-toggles label { justify-content:space-between; } }
+    @media (max-width:480px) { .glass { padding:15px; } .btn { font-size:11px; padding:6px 12px; } .api-name { font-size:16px; } }
 </style>
 </head>
 <body>
@@ -1379,12 +1406,11 @@ def update_config():
 @app.route('/update_ui', methods=['POST'])
 @admin_required
 def update_ui():
-    # This route is kept for backward compatibility but no longer used in dashboard
-    # We redirect to advanced_ui
+    # Redirect to advanced UI
     return redirect('/advanced_ui')
 
 # ==========================================
-# API ENDPOINT (with per‑API checks)
+# API ENDPOINT
 # ==========================================
 
 cache_store = {}
@@ -1442,7 +1468,6 @@ def api_endpoint():
     if request.host in base_url:
         log_error("CONFIG_WARNING", "Self‑referencing API URL used", api_key, query)
     
-    # Handle {query} placeholder
     if '{query}' in base_url:
         url = base_url.replace('{query}', query)
     else:
@@ -1469,7 +1494,6 @@ def api_endpoint():
         if resp.status_code == 200:
             try:
                 data = resp.json()
-                # Remove sensitive fields
                 for f in ['credit', 'developer', 'owner', 'powered_by', 'api_by', 'BUY_API', 'SUPPORT', 'author', 'created_by']:
                     data.pop(f, None)
                 if settings.get('enable_credit', True):
@@ -1558,6 +1582,7 @@ if __name__ == "__main__":
     print("🔧 Custom APIs: Admin Can Add")
     print("🎨 UI Customization: Separate Page (Advanced UI)")
     print("🛠️ API Management: Separate Page (Per‑API Controls)")
+    print("📱 Fully Responsive for Laptop & Phone")
     print(f"💀 Owner: @Xenon33cyber")
     print("=" * 70)
     print("\n📌 Endpoints:")
