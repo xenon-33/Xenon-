@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Xenon API Management System v3.2.0 (Enhanced with API & UI Management)
+Xenon API Management System v3.3.0 (UI & API Management Separated)
 Owner: @Xenon33cyber
 Developer: @Xenon33cyber
 Deploy: Localhost / Render / Vercel
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# ===== FILE PATHS - AUTO DETECT =====
+# ===== FILE PATHS =====
 if os.path.exists("/tmp"):
     BASE_DIR = "/tmp"
 else:
@@ -39,10 +39,10 @@ BLACKLIST_FILE = os.path.join(BASE_DIR, "blacklist.json")
 RATE_LIMIT_FILE = os.path.join(BASE_DIR, "rate_limits.json")
 CUSTOM_APIS_FILE = os.path.join(BASE_DIR, "custom_apis.json")
 UI_SETTINGS_FILE = os.path.join(BASE_DIR, "ui_settings.json")
-ADV_UI_FILE = os.path.join(BASE_DIR, "adv_ui_settings.json")   # New for advanced UI
+ADV_UI_FILE = os.path.join(BASE_DIR, "adv_ui_settings.json")
 
 SECRET_KEY = secrets.token_hex(32)
-VERSION = "3.2.0"
+VERSION = "3.3.0"
 MAX_KEYS_PER_USER = 100
 API_NAME = "Xenon API Management System"
 
@@ -477,7 +477,7 @@ LOGIN_HTML = """
 </html>
 """
 
-# ===== DASHBOARD HTML (with API Management & Advanced UI buttons) =====
+# ===== DASHBOARD HTML (UI Customization removed, added buttons) =====
 DASHBOARD_HTML = """
 <!DOCTYPE html>
 <html lang="en">
@@ -543,8 +543,6 @@ DASHBOARD_HTML = """
         .badge-active { background:rgba({{ rgb_primary }},0.12); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.2); }
         .badge-expired { background:rgba(255,0,0,0.08); color:#ff4444; border-color:rgba(255,0,0,0.15); }
         .badge-custom { background:rgba({{ rgb_primary }},0.06); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.1); }
-        .badge-maintenance { background:rgba(255,165,0,0.08); color:#ffa500; border-color:rgba(255,165,0,0.15); }
-        .badge-inactive { background:rgba(128,128,128,0.08); color:#888; border-color:rgba(128,128,128,0.15); }
         .copy-btn { background:rgba({{ rgb_primary }},0.04); color:{{ settings.primary_color }}; border:1px solid rgba({{ rgb_primary }},0.1); padding:4px 12px; border-radius:4px; cursor:pointer; font-size:11px; transition:all 0.3s ease; font-family:'Courier New',monospace; }
         .copy-btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 20px rgba({{ rgb_primary }},0.1); }
         .copy-btn.copied { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
@@ -559,12 +557,6 @@ DASHBOARD_HTML = """
         .section-title i { margin-right:8px; }
         .credit-section { background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.06); border-radius:8px; padding:12px; margin-top:10px; text-align:center; }
         .credit-section .credit-text { color:{{ settings.primary_color }}; font-weight:600; }
-        .custom-api-item { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba({{ rgb_primary }},0.015); border-radius:6px; margin-bottom:6px; border-left:2px solid {{ settings.primary_color }}; flex-wrap:wrap; gap:8px; }
-        .custom-api-item .api-name { color:{{ settings.primary_color }}; font-weight:600; font-size:13px; }
-        .custom-api-item .api-url { color:{{ settings.secondary_color }}; font-size:11px; word-break:break-all; max-width:60%; }
-        .custom-api-item .api-actions { display:flex; gap:6px; }
-        .delete-api-btn { background:rgba(255,0,0,0.04); color:#ff4444; border:1px solid rgba(255,0,0,0.1); padding:2px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-family:'Courier New',monospace; }
-        .delete-api-btn:hover { background:#ff4444; color:{{ settings.bg_color }}; }
         .toggle { position:relative; display:inline-block; width:44px; height:24px; }
         .toggle input { opacity:0; width:0; height:0; }
         .toggle .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:rgba({{ rgb_primary }},0.08); transition:.3s; border-radius:24px; border:1px solid rgba({{ rgb_primary }},0.1); }
@@ -583,25 +575,15 @@ DASHBOARD_HTML = """
         .footer-text { text-align:center; margin-top:25px; padding:15px; color:{{ settings.secondary_color }}; font-size:12px; border-top:1px solid rgba({{ rgb_primary }},0.05); font-family:'Courier New',monospace; letter-spacing:1px; }
         .footer-text .highlight { color:{{ settings.primary_color }}; }
         .scanline { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba({{ rgb_primary }},0.01) 2px, rgba({{ rgb_primary }},0.01) 4px); z-index:9999; }
-        .ui-editor-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
-        .api-mgmt-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
         @media (max-width:768px) {
             .key-gen-grid { grid-template-columns:1fr; }
             .key-gen-grid .full-width { grid-column:1; }
             .settings-grid { grid-template-columns:1fr; }
-            .ui-editor-grid { grid-template-columns:1fr; }
-            .api-mgmt-grid { grid-template-columns:1fr; }
             .stats-grid { grid-template-columns:repeat(2,1fr); }
             .header { flex-direction:column; align-items:stretch; text-align:center; }
             .header-actions { justify-content:center; }
             .logo { justify-content:center; }
         }
-        .api-mgmt-item { background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.06); border-radius:8px; padding:12px; margin-bottom:12px; }
-        .api-mgmt-item .api-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-        .api-mgmt-item .api-header .api-name { font-size:16px; font-weight:700; color:{{ settings.primary_color }}; }
-        .api-mgmt-item .api-toggles { display:flex; gap:15px; align-items:center; flex-wrap:wrap; }
-        .api-mgmt-item .api-toggles label { display:flex; align-items:center; gap:6px; font-size:12px; color:{{ settings.secondary_color }}; cursor:pointer; }
-        .api-mgmt-item textarea { width:100%; background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.08); border-radius:4px; color:{{ settings.primary_color }}; font-family:'Courier New',monospace; font-size:12px; padding:6px; }
     </style>
 </head>
 <body>
@@ -617,8 +599,8 @@ DASHBOARD_HTML = """
         </div>
         <div class="header-actions">
             <span class="status-badge status-online"><i class="fas fa-circle" style="font-size:8px;"></i> Online</span>
-            <a href="/advanced_ui" class="btn btn-info btn-sm"><i class="fas fa-palette"></i> Advanced UI</a>
-            <a href="#api-mgmt" class="btn btn-warning btn-sm"><i class="fas fa-plug"></i> Manage APIs</a>
+            <a href="/api_management" class="btn btn-warning btn-sm"><i class="fas fa-plug"></i> API Management</a>
+            <a href="/advanced_ui" class="btn btn-info btn-sm"><i class="fas fa-palette"></i> UI Settings</a>
             <button class="btn btn-outline btn-sm" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Refresh</button>
             <a href="/change_password" class="btn btn-warning btn-sm"><i class="fas fa-key"></i> Change Password</a>
             <a href="/logout" class="btn btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -652,144 +634,6 @@ DASHBOARD_HTML = """
             <div class="stat-number">{{ custom_apis|length }}</div>
             <div class="stat-label">{{ ui.stats_labels.custom }}</div>
         </div>
-    </div>
-    <div class="glass mb-20">
-        <h3 class="section-title"><i class="fas fa-palette"></i> UI Customization</h3>
-        <form method="POST" action="/update_ui">
-            <div class="ui-editor-grid">
-                <div class="form-group">
-                    <label>Primary Color</label>
-                    <input type="color" name="primary_color" class="form-control" value="{{ settings.primary_color }}" style="height:50px;padding:4px;background:transparent;border:1px solid rgba({{ rgb_primary }},0.1);">
-                </div>
-                <div class="form-group">
-                    <label>Secondary Color</label>
-                    <input type="color" name="secondary_color" class="form-control" value="{{ settings.secondary_color }}" style="height:50px;padding:4px;background:transparent;border:1px solid rgba({{ rgb_primary }},0.1);">
-                </div>
-                <div class="form-group">
-                    <label>Background Color</label>
-                    <input type="color" name="bg_color" class="form-control" value="{{ settings.bg_color }}" style="height:50px;padding:4px;background:transparent;border:1px solid rgba({{ rgb_primary }},0.1);">
-                </div>
-                <div class="form-group">
-                    <label>System Name</label>
-                    <input type="text" name="system_name" class="form-control" value="{{ settings.system_name }}" placeholder="Xenon API Management System">
-                </div>
-                <div class="form-group">
-                    <label>Logo Icon</label>
-                    <input type="text" name="logo_icon" class="form-control" value="{{ ui.logo_icon }}" placeholder="fa-skull">
-                </div>
-                <div class="form-group">
-                    <label>Header Title</label>
-                    <input type="text" name="header_title" class="form-control" value="{{ ui.header_title }}" placeholder="Xenon API Management System">
-                </div>
-                <div class="form-group">
-                    <label>Login Title</label>
-                    <input type="text" name="login_title" class="form-control" value="{{ ui.login_title }}" placeholder="⚡ XENON API MANAGEMENT">
-                </div>
-                <div class="form-group">
-                    <label>Login Subtitle</label>
-                    <input type="text" name="login_subtitle" class="form-control" value="{{ ui.login_subtitle }}" placeholder="Secure & Encrypted Access">
-                </div>
-                <div class="form-group">
-                    <label>Login Button Text</label>
-                    <input type="text" name="login_button_text" class="form-control" value="{{ ui.login_button_text }}" placeholder="Access Core">
-                </div>
-                <div class="form-group">
-                    <label>Login Placeholder</label>
-                    <input type="text" name="login_placeholder" class="form-control" value="{{ ui.login_placeholder }}" placeholder="> Enter Master Password_">
-                </div>
-                <div class="form-group">
-                    <label>Footer Credit Text</label>
-                    <input type="text" name="footer_text" class="form-control" value="{{ settings.footer_text }}" placeholder="Developed by @Xenon33cyber">
-                </div>
-                <div class="form-group">
-                    <label>Login Credit Text</label>
-                    <input type="text" name="login_credit_text" class="form-control" value="{{ ui.login_credit_text }}" placeholder="🔐 Secured by @Xenon33cyber">
-                </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
-                    <label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" name="glitch_effect" {% if ui.glitch_effect %}checked{% endif %}> Glitch Effect
-                    </label>
-                    <label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" name="matrix_rain" {% if ui.matrix_rain %}checked{% endif %}> Matrix Rain
-                    </label>
-                    <label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" name="typing_animation" {% if ui.typing_animation %}checked{% endif %}> Typing Animation
-                    </label>
-                    <label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" name="hacker_style" {% if ui.hacker_style %}checked{% endif %}> Hacker Style
-                    </label>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-success btn-block mt-20"><i class="fas fa-save"></i> Apply UI Customizations</button>
-        </form>
-    </div>
-    <!-- ===== API MANAGEMENT SECTION ===== -->
-    <div id="api-mgmt" class="glass mb-20">
-        <h3 class="section-title"><i class="fas fa-plug"></i> API Management <span style="font-size:12px;color:{{ settings.secondary_color }};">(Per‑API Controls)</span></h3>
-        {% if custom_apis %}
-            {% for api_name, api_cfg in custom_apis.items() %}
-            <div class="api-mgmt-item">
-                <div class="api-header">
-                    <span class="api-name">{{ api_name|upper }}</span>
-                    <span>
-                        {% if api_cfg.active %}
-                            {% if api_cfg.maintenance %}
-                                <span class="badge badge-maintenance"><i class="fas fa-tools"></i> Maintenance</span>
-                            {% else %}
-                                <span class="badge badge-active"><i class="fas fa-check-circle"></i> Active</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="badge badge-inactive"><i class="fas fa-times-circle"></i> Inactive</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <form method="POST" action="/update_custom_api" style="display:flex;flex-direction:column;gap:8px;">
-                    <input type="hidden" name="api_name" value="{{ api_name }}">
-                    <div class="api-toggles">
-                        <label>
-                            <input type="checkbox" name="active" {% if api_cfg.active %}checked{% endif %}> Active
-                        </label>
-                        <label>
-                            <input type="checkbox" name="maintenance" {% if api_cfg.maintenance %}checked{% endif %}> Maintenance
-                        </label>
-                        <label style="flex:1;min-width:200px;">
-                            URL: <input type="url" name="api_url" value="{{ api_cfg.url }}" style="background:rgba({{ rgb_primary }},0.02);border:1px solid rgba({{ rgb_primary }},0.08);border-radius:4px;color:{{ settings.primary_color }};padding:4px 8px;font-family:'Courier New',monospace;width:100%;">
-                        </label>
-                    </div>
-                    <div>
-                        <label style="font-size:11px;color:{{ settings.secondary_color }};">Response Override (JSON) – will be merged into original response:</label>
-                        <textarea name="response_override" rows="2" style="width:100%;background:rgba({{ rgb_primary }},0.02);border:1px solid rgba({{ rgb_primary }},0.08);border-radius:4px;color:{{ settings.primary_color }};font-family:'Courier New',monospace;font-size:12px;padding:6px;">{{ api_cfg.response_override|tojson }}</textarea>
-                    </div>
-                    <div style="display:flex;gap:10px;margin-top:4px;">
-                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-save"></i> Update</button>
-                        <form method="POST" action="/delete_custom_api" style="display:inline;">
-                            <input type="hidden" name="api_name" value="{{ api_name }}">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this custom API?')"><i class="fas fa-trash"></i> Delete</button>
-                        </form>
-                    </div>
-                </form>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div style="text-align:center;color:{{ settings.secondary_color }};padding:20px 0;">
-                <i class="fas fa-info-circle"></i> No custom APIs added yet. Add one below.
-            </div>
-        {% endif %}
-        <hr style="border-color:rgba({{ rgb_primary }},0.1);margin:15px 0;">
-        <h4 style="color:{{ settings.secondary_color }};font-size:13px;"><i class="fas fa-plus-circle"></i> Add New Custom API</h4>
-        <form method="POST" action="/add_custom_api">
-            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;">
-                <div class="form-group" style="margin:0;">
-                    <label>API Name</label>
-                    <input type="text" name="api_name" class="form-control" placeholder="e.g., number, telegram" required>
-                </div>
-                <div class="form-group" style="margin:0;">
-                    <label>API URL (with query placeholder)</label>
-                    <input type="url" name="api_url" class="form-control" placeholder="https://api.example.com?query=" required>
-                </div>
-                <button type="submit" class="btn btn-info" style="height:44px;"><i class="fas fa-plus"></i> Add</button>
-            </div>
-        </form>
     </div>
     <!-- ===== KEY GENERATION ===== -->
     <div class="glass mb-20">
@@ -1104,7 +948,7 @@ CHANGE_PASSWORD_HTML = """
 </html>
 """
 
-# ===== ADVANCED UI PAGE HTML =====
+# ===== ADVANCED UI HTML (unchanged) =====
 ADV_UI_HTML = """
 <!DOCTYPE html>
 <html>
@@ -1183,6 +1027,132 @@ ADV_UI_HTML = """
 </html>
 """
 
+# ===== API MANAGEMENT PAGE HTML =====
+API_MGMT_HTML = """
+<!DOCTYPE html>
+<html>
+<head><title>API Management</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Courier New',monospace; background:{{ settings.bg_color }}; color:{{ settings.primary_color }}; min-height:100vh; padding:20px; }
+    .container { max-width:1000px; margin:0 auto; }
+    .glass { background:rgba(10,10,10,0.95); border:1px solid rgba({{ rgb_primary }},0.12); border-radius:16px; padding:30px; margin-bottom:20px; }
+    h1 { text-align:center; color:{{ settings.primary_color }}; text-shadow:0 0 30px rgba({{ rgb_primary }},0.05); margin-bottom:20px; }
+    .form-group { margin-bottom:15px; }
+    .form-group label { display:block; margin-bottom:6px; font-size:12px; text-transform:uppercase; color:{{ settings.secondary_color }}; }
+    .form-control { width:100%; padding:10px 14px; background:rgba({{ rgb_primary }},0.03); border:1px solid rgba({{ rgb_primary }},0.1); border-radius:8px; color:{{ settings.primary_color }}; font-size:14px; font-family:'Courier New',monospace; }
+    .form-control:focus { outline:none; border-color:{{ settings.primary_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.06); }
+    .btn { padding:8px 16px; border:1px solid {{ settings.primary_color }}; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.3s ease; display:inline-flex; align-items:center; gap:6px; font-size:13px; text-decoration:none; font-family:'Courier New',monospace; background:transparent; color:{{ settings.primary_color }}; }
+    .btn:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; box-shadow:0 0 30px rgba({{ rgb_primary }},0.12); transform:translateY(-2px); }
+    .btn-success { border-color:{{ settings.primary_color }}; color:{{ settings.primary_color }}; }
+    .btn-success:hover { background:{{ settings.primary_color }}; color:{{ settings.bg_color }}; }
+    .btn-danger { border-color:#ff4444; color:#ff4444; }
+    .btn-danger:hover { background:#ff4444; color:{{ settings.bg_color }}; }
+    .btn-sm { padding:4px 10px; font-size:11px; }
+    .btn-block { width:100%; justify-content:center; }
+    .mt-20 { margin-top:20px; }
+    .text-center { text-align:center; }
+    .badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:600; border:1px solid transparent; }
+    .badge-active { background:rgba({{ rgb_primary }},0.12); color:{{ settings.primary_color }}; border-color:rgba({{ rgb_primary }},0.2); }
+    .badge-maintenance { background:rgba(255,165,0,0.08); color:#ffa500; border-color:rgba(255,165,0,0.15); }
+    .badge-inactive { background:rgba(128,128,128,0.08); color:#888; border-color:rgba(128,128,128,0.15); }
+    .api-item { background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.06); border-radius:8px; padding:15px; margin-bottom:15px; }
+    .api-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+    .api-name { font-size:18px; font-weight:700; color:{{ settings.primary_color }}; }
+    .api-toggles { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+    .api-toggles label { display:flex; align-items:center; gap:6px; font-size:13px; color:{{ settings.secondary_color }}; cursor:pointer; }
+    .api-toggles input[type="checkbox"] { width:18px; height:18px; accent-color:{{ settings.primary_color }}; }
+    textarea { width:100%; background:rgba({{ rgb_primary }},0.02); border:1px solid rgba({{ rgb_primary }},0.08); border-radius:4px; color:{{ settings.primary_color }}; font-family:'Courier New',monospace; font-size:12px; padding:8px; }
+    .flex { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .flex-between { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    .add-api-grid { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; }
+    @media (max-width:768px) { .add-api-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="glass">
+        <h1><i class="fas fa-plug"></i> API Management</h1>
+        <p style="color:{{ settings.secondary_color }};font-size:13px;text-align:center;margin-bottom:20px;">Manage all your custom APIs – each with independent Active, Maintenance, and Response Override.</p>
+        <a href="/dashboard" class="btn" style="border-color:{{ settings.secondary_color }};color:{{ settings.secondary_color }};"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        <hr style="border-color:rgba({{ rgb_primary }},0.1);margin:20px 0;">
+        <!-- Add New API -->
+        <h3 style="color:{{ settings.secondary_color }};font-size:16px;margin-bottom:15px;"><i class="fas fa-plus-circle"></i> Add New Custom API</h3>
+        <form method="POST" action="/add_custom_api">
+            <div class="add-api-grid">
+                <div class="form-group" style="margin:0;">
+                    <label>API Name</label>
+                    <input type="text" name="api_name" class="form-control" placeholder="e.g., number, telegram" required>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>API URL (with query placeholder)</label>
+                    <input type="url" name="api_url" class="form-control" placeholder="https://api.example.com?query=" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="height:44px;"><i class="fas fa-plus"></i> Add</button>
+            </div>
+        </form>
+        <hr style="border-color:rgba({{ rgb_primary }},0.1);margin:25px 0;">
+        <!-- Existing APIs -->
+        <h3 style="color:{{ settings.secondary_color }};font-size:16px;margin-bottom:15px;"><i class="fas fa-list"></i> Your Custom APIs</h3>
+        {% if custom_apis %}
+            {% for api_name, api_cfg in custom_apis.items() %}
+            <div class="api-item">
+                <div class="api-header">
+                    <span class="api-name">{{ api_name|upper }}</span>
+                    <span>
+                        {% if api_cfg.active %}
+                            {% if api_cfg.maintenance %}
+                                <span class="badge badge-maintenance"><i class="fas fa-tools"></i> Maintenance</span>
+                            {% else %}
+                                <span class="badge badge-active"><i class="fas fa-check-circle"></i> Active</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-inactive"><i class="fas fa-times-circle"></i> Inactive</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <form method="POST" action="/update_custom_api" style="display:flex;flex-direction:column;gap:10px;">
+                    <input type="hidden" name="api_name" value="{{ api_name }}">
+                    <div class="api-toggles">
+                        <label>
+                            <input type="checkbox" name="active" {% if api_cfg.active %}checked{% endif %}> Active
+                        </label>
+                        <label>
+                            <input type="checkbox" name="maintenance" {% if api_cfg.maintenance %}checked{% endif %}> Maintenance
+                        </label>
+                        <label style="flex:1;min-width:250px;">
+                            URL: <input type="url" name="api_url" value="{{ api_cfg.url }}" style="background:rgba({{ rgb_primary }},0.02);border:1px solid rgba({{ rgb_primary }},0.08);border-radius:4px;color:{{ settings.primary_color }};padding:4px 8px;font-family:'Courier New',monospace;width:100%;">
+                        </label>
+                    </div>
+                    <div>
+                        <label style="font-size:11px;color:{{ settings.secondary_color }};">Response Override (JSON) – will be merged into original response:</label>
+                        <textarea name="response_override" rows="3">{{ api_cfg.response_override|tojson }}</textarea>
+                    </div>
+                    <div class="flex">
+                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-save"></i> Update</button>
+                        <form method="POST" action="/delete_custom_api" style="display:inline;">
+                            <input type="hidden" name="api_name" value="{{ api_name }}">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this custom API?')"><i class="fas fa-trash"></i> Delete</button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align:center;color:{{ settings.secondary_color }};padding:30px 0;">
+                <i class="fas fa-info-circle"></i> No custom APIs added yet. Use the form above to add one.
+            </div>
+        {% endif %}
+        <div class="mt-20 text-center">
+            <a href="/dashboard" class="btn" style="border-color:{{ settings.secondary_color }};color:{{ settings.secondary_color }};"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+"""
+
 # ==========================================
 # ROUTES
 # ==========================================
@@ -1233,6 +1203,14 @@ def dashboard():
         ui=ui
     )
 
+@app.route('/api_management')
+@admin_required
+def api_management():
+    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
+    custom_apis = get_custom_apis()
+    rgb_primary = hex_to_rgb(settings.get('primary_color', '#00ff41'))
+    return render_template_string(API_MGMT_HTML, settings=settings, custom_apis=custom_apis, rgb_primary=rgb_primary)
+
 @app.route('/advanced_ui', methods=['GET', 'POST'])
 @admin_required
 def advanced_ui():
@@ -1265,7 +1243,7 @@ def update_custom_api():
         response_override = json.loads(response_override_raw) if response_override_raw else {}
     except json.JSONDecodeError:
         flash('Invalid JSON in Response Override!', 'danger')
-        return redirect('/dashboard')
+        return redirect('/api_management')
     
     custom_apis = get_custom_apis()
     if api_name in custom_apis:
@@ -1282,7 +1260,7 @@ def update_custom_api():
         flash(f'Custom API "{api_name}" updated!', 'success')
     else:
         flash('API not found!', 'danger')
-    return redirect('/dashboard')
+    return redirect('/api_management')
 
 @app.route('/add_custom_api', methods=['POST'])
 @admin_required
@@ -1291,12 +1269,11 @@ def add_custom_api():
     api_url = request.form.get('api_url', '').strip()
     if not api_name or not api_url:
         flash('Please provide both API name and URL!', 'danger')
-        return redirect('/dashboard')
+        return redirect('/api_management')
     api_name = re.sub(r'[^a-zA-Z0-9_]', '', api_name)
-    # Save with defaults: active=True, maintenance=False, override={}
     save_custom_api(api_name, api_url, active=True, maintenance=False, response_override={})
     flash(f'Custom API "{api_name}" added successfully!', 'success')
-    return redirect('/dashboard')
+    return redirect('/api_management')
 
 @app.route('/delete_custom_api', methods=['POST'])
 @admin_required
@@ -1304,7 +1281,7 @@ def delete_custom_api_route():
     api_name = request.form.get('api_name')
     if api_name and delete_custom_api(api_name):
         flash(f'Custom API "{api_name}" deleted!', 'warning')
-    return redirect('/dashboard')
+    return redirect('/api_management')
 
 @app.route('/logout')
 def logout():
@@ -1402,32 +1379,9 @@ def update_config():
 @app.route('/update_ui', methods=['POST'])
 @admin_required
 def update_ui():
-    ui = get_ui_settings()
-    settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
-    
-    settings['primary_color'] = request.form.get('primary_color', '#00ff41')
-    settings['secondary_color'] = request.form.get('secondary_color', '#00aa33')
-    settings['bg_color'] = request.form.get('bg_color', '#0a0a0a')
-    settings['system_name'] = request.form.get('system_name', 'Xenon API Management System')
-    settings['footer_text'] = request.form.get('footer_text', 'Developed by @Xenon33cyber')
-    
-    ui['logo_icon'] = request.form.get('logo_icon', 'fa-skull')
-    ui['header_title'] = request.form.get('header_title', 'Xenon API Management System')
-    ui['header_subtitle'] = request.form.get('header_subtitle', 'Premium API Management Platform')
-    ui['login_title'] = request.form.get('login_title', '⚡ XENON API MANAGEMENT')
-    ui['login_subtitle'] = request.form.get('login_subtitle', 'Secure & Encrypted Access')
-    ui['login_button_text'] = request.form.get('login_button_text', 'Access Core')
-    ui['login_placeholder'] = request.form.get('login_placeholder', '> Enter Master Password_')
-    ui['login_credit_text'] = request.form.get('login_credit_text', '🔐 Secured by @Xenon33cyber')
-    ui['glitch_effect'] = 'glitch_effect' in request.form
-    ui['matrix_rain'] = 'matrix_rain' in request.form
-    ui['typing_animation'] = 'typing_animation' in request.form
-    ui['hacker_style'] = 'hacker_style' in request.form
-    
-    save_data(SETTINGS_FILE, settings)
-    save_ui_settings(ui)
-    flash('UI settings updated successfully!', 'success')
-    return redirect('/dashboard')
+    # This route is kept for backward compatibility but no longer used in dashboard
+    # We redirect to advanced_ui
+    return redirect('/advanced_ui')
 
 # ==========================================
 # API ENDPOINT (with per‑API checks)
@@ -1438,7 +1392,6 @@ cache_store = {}
 @app.route('/api/v1/info', methods=['GET', 'POST'])
 def api_endpoint():
     settings = load_data(SETTINGS_FILE, DEFAULT_SETTINGS)
-    # Global maintenance check
     if settings.get('maintenance_mode', False):
         return jsonify({"error": "API is under maintenance. Please try again later."}), 503
     
@@ -1477,10 +1430,8 @@ def api_endpoint():
         return jsonify({"error": f"API endpoint '{api_type}' is not configured."}), 500
     
     api_config = custom_apis[api_type]
-    # Per‑API active check
     if not api_config.get('active', True):
         return jsonify({"error": f"API '{api_type}' is currently inactive."}), 403
-    # Per‑API maintenance check
     if api_config.get('maintenance', False):
         return jsonify({"error": f"API '{api_type}' is under maintenance."}), 503
     
@@ -1488,11 +1439,10 @@ def api_endpoint():
     if not base_url:
         return jsonify({"error": f"API '{api_type}' has no URL configured."}), 500
     
-    # Handle self‑reference: just log warning, don't block
     if request.host in base_url:
         log_error("CONFIG_WARNING", "Self‑referencing API URL used", api_key, query)
     
-    # Replace {query} placeholder if present, else append
+    # Handle {query} placeholder
     if '{query}' in base_url:
         url = base_url.replace('{query}', query)
     else:
@@ -1504,7 +1454,6 @@ def api_endpoint():
         if time.time() - cache_time < settings.get('cache_duration', 300):
             keys[api_key]['used'] += 1
             save_data(KEYS_FILE, keys)
-            # Merge response override
             if api_config.get('response_override'):
                 cache_data.update(api_config['response_override'])
             return jsonify(cache_data)
@@ -1531,7 +1480,6 @@ def api_endpoint():
                 data['server_time'] = datetime.now().isoformat()
                 data['api_name'] = settings.get('system_name', API_NAME)
                 
-                # Merge response override
                 if api_config.get('response_override'):
                     data.update(api_config['response_override'])
                 
@@ -1608,8 +1556,8 @@ if __name__ == "__main__":
     print("🛡️ Rate Limiting: Active")
     print("⚡ Cache: Enabled")
     print("🔧 Custom APIs: Admin Can Add")
-    print("🎨 UI Customization: Fully Configurable")
-    print("🛠️ Per‑API Management: Active/Inactive/Maintenance/Override")
+    print("🎨 UI Customization: Separate Page (Advanced UI)")
+    print("🛠️ API Management: Separate Page (Per‑API Controls)")
     print(f"💀 Owner: @Xenon33cyber")
     print("=" * 70)
     print("\n📌 Endpoints:")
@@ -1618,5 +1566,6 @@ if __name__ == "__main__":
     print(f"  📡 API: http://localhost:{port}/api/v1/info?key=admin&query=test")
     print(f"  ❤️ Health: http://localhost:{port}/api/health")
     print(f"  🎨 Advanced UI: http://localhost:{port}/advanced_ui")
+    print(f"  ⚙️ API Management: http://localhost:{port}/api_management")
     print("=" * 70)
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
